@@ -1,0 +1,291 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
+
+import '../models/activity.dart';
+import '../storage/kv_store.dart';
+
+class StravaClient {
+  StravaClient({required Dio dio, required KvStore kvStore})
+      : _dio = dio,
+        _kvStore = kvStore;
+
+  final Dio _dio;
+  final KvStore _kvStore;
+
+  static const redirectUri = 'stravasync://localhost/oauth';
+
+  static const _clientId = '216639';
+  static const _clientSecret = '7ec5fd013eeaff4bc2899dc48ee2b845d01b56ef';
+
+  Future<bool> isConfigured() async {
+    // 既然已经内置了，所以总是认为已经配置（或者我们可以检查是否获取了 Access Token）
+    final token = await _kvStore.getSecureString(Keys.stravaAccessToken);
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<String> buildAuthorizeUrl({bool forcePrompt = false}) async {
+    final prompt = forcePrompt ? 'force' : 'auto';
+    final uri = Uri.https(
+      'www.strava.com',
+      '/oauth/authorize',
+      {
+        'client_id': _clientId,
+        'redirect_uri': redirectUri,
+        'response_type': 'code',
+        'approval_prompt': prompt,
+        'scope': 'activity:read_all,activity:write',
+      },
+    );
+    return uri.toString();
+  }
+
+  Future<void> exchangeCode(String code) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      'https://www.strava.com/oauth/token',
+      data: FormData.fromMap({
+        'client_id': _clientId,
+        'client_secret': _clientSecret,
+        'code': code,
+        'grant_type': 'authorization_code',
+      }),
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+    final payload = response.data;
+    if (payload == null) {
+      throw StateError('Strava token 返回为空');
+    }
+    await _persistTokenPayload(payload);
+  }
+
+  Future<String> uploadActivityFile({
+    required File file,
+    required Activity activity,
+    required String externalId,
+  }) async {
+    final token = await _ensureAccessToken();
+    final result = await _uploadWithToken(
+      token: token,
+      file: file,
+      activity: activity,
+      externalId: externalId,
+    );
+    if (result.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      final retried = await _uploadWithToken(
+        token: refreshed,
+        file: file,
+        activity: activity,
+        externalId: externalId,
+      );
+      if (retried.statusCode != 201) {
+        throw StravaException(_extractError(retried));
+      }
+      return await _pollUpload(
+        token: refreshed,
+        uploadId: retried.data?['id']?.toString(),
+      );
+    }
+
+    if (result.statusCode != 201) {
+      throw StravaException(_extractError(result));
+    }
+    return await _pollUpload(
+      token: token,
+      uploadId: result.data?['id']?.toString(),
+    );
+  }
+
+  Future<Response<Map<String, dynamic>>> _uploadWithToken({
+    required String token,
+    required File file,
+    required Activity activity,
+    required String externalId,
+  }) async {
+    final dataType = _dataTypeFor(file);
+    final data = <String, dynamic>{
+      'data_type': dataType,
+      'external_id': externalId,
+      'name': activity.name,
+    };
+    final sportType = _stravaSportType(activity.sportType);
+    if (sportType != null) {
+      data['sport_type'] = sportType;
+    }
+    data['file'] = await MultipartFile.fromFile(
+      file.path,
+      filename: file.uri.pathSegments.last,
+      contentType: MediaType('application', 'octet-stream'),
+    );
+
+    final formData = FormData.fromMap(data);
+
+    return _dio.post<Map<String, dynamic>>(
+      'https://www.strava.com/api/v3/uploads',
+      data: formData,
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+        validateStatus: (status) => status != null,
+      ),
+    );
+  }
+
+  Future<String> _pollUpload({required String token, required String? uploadId}) async {
+    if (uploadId == null || uploadId.isEmpty) {
+      return '';
+    }
+
+    var currentToken = token;
+    for (var i = 0; i < 15; i += 1) {
+      await Future<void>.delayed(const Duration(seconds: 1));
+      final status = await _dio.get<Map<String, dynamic>>(
+        'https://www.strava.com/api/v3/uploads/$uploadId',
+        options: Options(
+          headers: {'Authorization': 'Bearer $currentToken'},
+          validateStatus: (status) => status != null,
+        ),
+      );
+      if (status.statusCode == 401) {
+        currentToken = await _refreshAccessToken();
+        continue;
+      }
+      if (status.statusCode != 200) {
+        throw StravaException(_extractError(status));
+      }
+      final body = status.data ?? {};
+      final error = body['error']?.toString();
+      final activityId = body['activity_id']?.toString();
+      if (error != null && error.isNotEmpty) {
+        throw StravaException(error);
+      }
+      if (activityId != null && activityId.isNotEmpty) {
+        return activityId;
+      }
+    }
+    return '';
+  }
+
+  Future<String> _ensureAccessToken() async {
+    final accessToken = await _kvStore.getSecureString(Keys.stravaAccessToken);
+    final refreshToken = await _kvStore.getSecureString(Keys.stravaRefreshToken);
+    final expiresAtRaw = await _kvStore.getSecureString(Keys.stravaExpiresAt);
+
+    final expiresAt = int.tryParse(expiresAtRaw ?? '');
+    final nowSeconds = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+
+    if (accessToken != null &&
+        accessToken.isNotEmpty &&
+        (expiresAt == null || expiresAt - nowSeconds > 3600)) {
+      return accessToken;
+    }
+    if (accessToken != null && accessToken.isNotEmpty && (refreshToken == null || refreshToken.isEmpty)) {
+      return accessToken;
+    }
+    return _refreshAccessToken();
+  }
+
+  Future<String> _refreshAccessToken() async {
+    final refreshToken = await _kvStore.getSecureString(Keys.stravaRefreshToken);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw StateError('没有可用的 Refresh Token');
+    }
+
+    final response = await _dio.post<Map<String, dynamic>>(
+      'https://www.strava.com/oauth/token',
+      data: FormData.fromMap({
+        'client_id': _clientId,
+        'client_secret': _clientSecret,
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+      }),
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+    final payload = response.data;
+    if (payload == null) {
+      throw StateError('Strava refresh 返回为空');
+    }
+    await _persistTokenPayload(payload);
+    final accessToken = payload['access_token']?.toString();
+    if (accessToken == null || accessToken.isEmpty) {
+      throw StateError('Strava 未返回 access_token');
+    }
+    return accessToken;
+  }
+
+  Future<void> _persistTokenPayload(Map<String, dynamic> payload) async {
+    if (payload['access_token'] case final String token) {
+      await _kvStore.setSecureString(Keys.stravaAccessToken, token);
+    } else if (payload['access_token'] != null) {
+      await _kvStore.setSecureString(Keys.stravaAccessToken, payload['access_token'].toString());
+    }
+
+    if (payload['refresh_token'] case final String token) {
+      await _kvStore.setSecureString(Keys.stravaRefreshToken, token);
+    } else if (payload['refresh_token'] != null) {
+      await _kvStore.setSecureString(Keys.stravaRefreshToken, payload['refresh_token'].toString());
+    }
+
+    if (payload['expires_at'] != null) {
+      await _kvStore.setSecureString(Keys.stravaExpiresAt, payload['expires_at'].toString());
+    }
+  }
+
+  String _extractError(Response response) {
+    final data = response.data;
+    if (data is Map) {
+      final error = data['error'];
+      final message = data['message'];
+      final errors = data['errors'];
+      if (error != null) return error.toString();
+      if (message != null) return message.toString();
+      if (errors != null) return errors.toString();
+    }
+    return 'HTTP ${response.statusCode}: ${response.statusMessage ?? ''}'.trim();
+  }
+}
+
+class StravaException implements Exception {
+  StravaException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
+String _dataTypeFor(File file) {
+  final path = file.path.toLowerCase();
+  if (path.endsWith('.fit')) return 'fit';
+  if (path.endsWith('.gpx')) return 'gpx';
+  if (path.endsWith('.tcx')) return 'tcx';
+  throw StravaException('不支持的文件类型：$path');
+}
+
+String? _stravaSportType(String? sportType) {
+  if (sportType == null || sportType.trim().isEmpty) return null;
+
+  switch (sportType.trim().toLowerCase()) {
+    case 'cycling':
+    case 'ride':
+      return 'Ride';
+    case 'running':
+    case 'run':
+      return 'Run';
+    case 'trail_run':
+      return 'TrailRun';
+    case 'walking':
+    case 'walk':
+      return 'Walk';
+    case 'hiking':
+    case 'hike':
+      return 'Hike';
+    case 'swimming':
+    case 'swim':
+      return 'Swim';
+    case 'indoor_cycling':
+    case 'virtual_ride':
+      return 'VirtualRide';
+  }
+  return null;
+}
