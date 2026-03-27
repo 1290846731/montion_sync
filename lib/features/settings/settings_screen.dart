@@ -22,8 +22,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _onelapPassword = TextEditingController();
   final _onelapCookie = TextEditingController();
 
+  final _intervalsApiKey = TextEditingController();
+
   bool _loading = true;
   bool _stravaConfigured = false;
+  String _syncTarget = 'strava';
 
   @override
   void initState() {
@@ -39,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _onelapUsername.dispose();
     _onelapPassword.dispose();
     _onelapCookie.dispose();
+    _intervalsApiKey.dispose();
     super.dispose();
   }
 
@@ -53,12 +57,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _onelapPassword.text = (await kv.getSecureString(Keys.onelapPassword)) ?? '';
     _onelapCookie.text = (await kv.getSecureString(Keys.onelapCookie)) ?? '';
 
+    _intervalsApiKey.text = (await kv.getSecureString(Keys.intervalsApiKey)) ?? '';
+    final syncTarget = (kv.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
+
     final stravaConfigured = await widget.services.stravaClient.isConfigured();
 
     if (!mounted) return;
     setState(() {
       _loading = false;
       _stravaConfigured = stravaConfigured;
+      _syncTarget = syncTarget == 'intervals' ? 'intervals' : 'strava';
     });
   }
 
@@ -100,6 +108,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Strava 授权完成')));
   }
 
+  Future<void> _saveIntervals() async {
+    final kv = widget.services.kvStore;
+    await kv.setSecureString(Keys.intervalsApiKey, _intervalsApiKey.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已保存 Intervals.icu 配置')));
+  }
+
+  Future<void> _saveSyncTarget(String value) async {
+    final v = value == 'intervals' ? 'intervals' : 'strava';
+    await widget.services.kvStore.setString(Keys.syncTarget, v);
+    if (!mounted) return;
+    setState(() => _syncTarget = v);
+  }
+
+  void _onSyncTargetChanged(String? value) {
+    if (value == null) return;
+    _saveSyncTarget(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -112,6 +139,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Text('账号配置', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         ExpansionTile(
+          title: const Text('同步设置'),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            RadioGroup<String>(
+              groupValue: _syncTarget,
+              onChanged: _onSyncTargetChanged,
+              child: const Column(
+                children: [
+                  RadioListTile<String>(
+                    value: 'strava',
+                    title: Text('同步数据到 Strava'),
+                  ),
+                  RadioListTile<String>(
+                    value: 'intervals',
+                    title: Text('只同步数据到 Intervals.icu'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ExpansionTile(
           title: Text(_stravaConfigured ? 'Strava (已授权)' : 'Strava (未授权)'),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
@@ -121,6 +171,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _connectStrava,
               child: Text(_stravaConfigured ? '重新授权' : '去授权'),
             ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ExpansionTile(
+          title: const Text('Intervals.icu'),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          children: [
+            TextField(
+              controller: _intervalsApiKey,
+              decoration: const InputDecoration(labelText: 'API_KEY'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            FilledButton(onPressed: _saveIntervals, child: const Text('保存')),
           ],
         ),
         const SizedBox(height: 8),
@@ -180,4 +244,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-

@@ -37,6 +37,9 @@ abstract class Keys {
   static const onelapPassword = 'onelap.password';
   static const onelapCookie = 'onelap.cookie';
 
+  static const intervalsApiKey = 'intervals.api_key';
+  static const syncTarget = 'sync.target';
+
   // static const stravaClientId = 'strava.client_id';
   // static const stravaClientSecret = 'strava.client_secret';
   static const stravaAccessToken = 'strava.access_token';
@@ -45,4 +48,3 @@ abstract class Keys {
 
   static const lastSyncAtPrefix = 'sync.last_at.';
 }
-

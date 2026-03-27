@@ -6,6 +6,7 @@ import 'features/settings/settings_screen.dart';
 import 'features/sync/sync_screen.dart';
 import 'services/app_services.dart';
 import 'services/fit_file_handler.dart';
+import 'storage/kv_store.dart';
 
 class StravaSyncApp extends StatelessWidget {
   const StravaSyncApp({super.key, required this.services});
@@ -69,8 +70,14 @@ class _HomeState extends State<_Home> {
         sourceLabel: 'shared_file',
       );
       if (!mounted) return;
+      final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
+      final tip = target == 'intervals' ? '同步ICU成功' : '同步到Strava成功';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('外部文件上传完成：${record.status}')),
+        SnackBar(
+          content: Text(
+            record.status == 'success' ? tip : '外部文件上传完成：${record.status}',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;

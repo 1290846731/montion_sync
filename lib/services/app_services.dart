@@ -59,6 +59,7 @@ class AppServices {
       syncDb: syncDb,
       sourceRegistry: sourceRegistry,
       stravaClient: stravaClient,
+      dio: dio,
     );
 
     return AppServices._(

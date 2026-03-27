@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../../services/app_services.dart';
+import '../../storage/kv_store.dart';
 import '../../storage/sync_db.dart';
 
 class SyncScreen extends StatefulWidget {
@@ -20,6 +21,15 @@ class _SyncScreenState extends State<SyncScreen> {
   bool _syncing = false;
   int _latestLimit = 1;
   List<SyncRecord> _latest = const [];
+
+  String _currentTarget() {
+    final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
+    return target == 'intervals' ? 'intervals' : 'strava';
+  }
+
+  String _successTip(String target) {
+    return target == 'intervals' ? '同步ICU成功' : '同步到Strava成功';
+  }
 
   @override
   void initState() {
@@ -40,11 +50,12 @@ class _SyncScreenState extends State<SyncScreen> {
     if (sourceName == null) return;
     setState(() => _syncing = true);
     try {
-      final results = await widget.services.syncService.syncToStrava(sourceName: sourceName);
+      final target = _currentTarget();
+      final results = await widget.services.syncService.syncNow(sourceName: sourceName);
       await _refreshLatest();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('批量同步完成：${results.length} 条')),
+        SnackBar(content: Text('${_successTip(target)}：${results.length} 条')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -61,7 +72,8 @@ class _SyncScreenState extends State<SyncScreen> {
     if (sourceName == null) return;
     setState(() => _syncing = true);
     try {
-      final results = await widget.services.syncService.syncToStrava(
+      final target = _currentTarget();
+      final results = await widget.services.syncService.syncNow(
         sourceName: sourceName,
         limit: _latestLimit,
         ignoreSince: true,
@@ -69,7 +81,7 @@ class _SyncScreenState extends State<SyncScreen> {
       await _refreshLatest();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('拉取最新 $_latestLimit 条同步完成：${results.length} 条有效上传')),
+        SnackBar(content: Text('${_successTip(target)}：${results.length} 条')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -87,6 +99,12 @@ class _SyncScreenState extends State<SyncScreen> {
       final newRecord = await widget.services.syncService.reSyncRecord(record);
       await _refreshLatest();
       if (!mounted) return;
+      if (newRecord.status == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_successTip(newRecord.target))),
+        );
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('重新同步完成：${newRecord.status}')),
       );
@@ -119,7 +137,11 @@ class _SyncScreenState extends State<SyncScreen> {
       await _refreshLatest();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('上传完成：${record.status}')),
+        SnackBar(
+          content: Text(
+            record.status == 'success' ? _successTip(record.target) : '上传完成：${record.status}',
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -134,6 +156,9 @@ class _SyncScreenState extends State<SyncScreen> {
   @override
   Widget build(BuildContext context) {
     final sources = widget.services.sourceRegistry.all;
+    final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
+    final title = target == 'intervals' ? '同步到 Intervals.icu' : '同步到 Strava';
+    final manualLabel = target == 'intervals' ? '选择本地 .fit 同步到 Intervals.icu' : '选择本地 .fit 同步到 Strava';
 
     return Column(
       children: [
@@ -142,7 +167,7 @@ class _SyncScreenState extends State<SyncScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('同步到 Strava', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _sourceName,
@@ -199,7 +224,7 @@ class _SyncScreenState extends State<SyncScreen> {
                 children: [
                   FilledButton.tonal(
                     onPressed: _syncing ? null : () => _importAndUpload('local_fit'),
-                    child: const Text('选择本地 .fit 同步到 Strava'),
+                    child: Text(manualLabel),
                   ),
                 ],
               ),
