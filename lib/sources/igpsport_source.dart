@@ -1,19 +1,27 @@
 import 'dart:io';
 
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import '../models/activity.dart';
 import '../storage/kv_store.dart';
 import '../utils/parsing.dart';
 import 'source_adapter.dart';
 
-class IGPSportSource implements SourceAdapter {
-  IGPSportSource({required Dio dio, required KvStore kvStore})
-      : _dio = dio,
-        _kvStore = kvStore;
+enum IGPSportExportType { fit, gpx }
 
-  final Dio _dio;
+class IGPSportSource implements SourceAdapter {
+  IGPSportSource({required Dio dio, required KvStore kvStore}) : _kvStore = kvStore {
+    _cookieJar = CookieJar();
+    _client = Dio(dio.options);
+    _client.interceptors.add(CookieManager(_cookieJar));
+  }
+
+  late final CookieJar _cookieJar;
+  late final Dio _client;
   final KvStore _kvStore;
+  final Set<IGPSportExportType> _warmedExportTypes = <IGPSportExportType>{};
 
   @override
   String get name => 'igpsport';
@@ -43,7 +51,7 @@ class IGPSportSource implements SourceAdapter {
       throw StateError('IGPSPORT 账号未配置');
     }
 
-    final response = await _dio.post<Map<String, dynamic>>(
+    final response = await _client.post<Map<String, dynamic>>(
       '$_apiRoot/service/auth/account/login',
       data: {
         'username': username,
@@ -84,6 +92,22 @@ class IGPSportSource implements SourceAdapter {
 
   @override
   Future<List<Activity>> listActivities({DateTime? since, DateTime? until, int? limit}) async {
+    return listActivitiesForExport(
+      exportType: IGPSportExportType.fit,
+      since: since,
+      until: until,
+      limit: limit,
+    );
+  }
+
+  Future<List<Activity>> listActivitiesForExport({
+    required IGPSportExportType exportType,
+    DateTime? since,
+    DateTime? until,
+    int? limit,
+    int pageSize = 20,
+    int? maxPages,
+  }) async {
     final token = await _accessToken();
 
     final activities = <Activity>[];
@@ -93,8 +117,8 @@ class IGPSportSource implements SourceAdapter {
     while (true) {
       final params = <String, dynamic>{
         'pageNo': page,
-        'pageSize': 20,
-        'reqType': 0,
+        'pageSize': pageSize,
+        'reqType': exportType == IGPSportExportType.gpx ? 1 : 0,
         'sort': 1,
       };
 
@@ -104,7 +128,7 @@ class IGPSportSource implements SourceAdapter {
         params['endTime'] = '${end.year.toString().padLeft(4, '0')}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
       }
 
-      final response = await _dio.get<Map<String, dynamic>>(
+      final response = await _client.get<Map<String, dynamic>>(
         '$_apiRoot/service/web-gateway/web-analyze/activity/queryMyActivity',
         queryParameters: params,
         options: Options(
@@ -156,6 +180,7 @@ class IGPSportSource implements SourceAdapter {
 
       final totalPage = int.tryParse(data['totalPage']?.toString() ?? '') ?? 1;
       if (page >= totalPage) break;
+      if (maxPages != null && page >= maxPages) break;
       page += 1;
       await Future<void>.delayed(const Duration(milliseconds: 200));
     }
@@ -165,20 +190,68 @@ class IGPSportSource implements SourceAdapter {
 
   @override
   Future<File> downloadFit({required Activity activity, required Directory outputDir}) async {
+    return _downloadRouteFile(
+      activity: activity,
+      outputDir: outputDir,
+      exportType: IGPSportExportType.fit,
+    );
+  }
+
+  Future<File> downloadGpx({required Activity activity, required Directory outputDir}) async {
+    return _downloadRouteFile(
+      activity: activity,
+      outputDir: outputDir,
+      exportType: IGPSportExportType.gpx,
+    );
+  }
+
+  Future<void> _warmupExportType(IGPSportExportType exportType, {DateTime? since, DateTime? until}) async {
+    if (_warmedExportTypes.contains(exportType)) return;
+    _warmedExportTypes.add(exportType);
+
+    try {
+      await listActivitiesForExport(
+        exportType: exportType,
+        since: since,
+        until: until,
+        limit: 1,
+        pageSize: 1,
+        maxPages: 1,
+      );
+    } catch (_) {}
+  }
+
+  Future<File> _downloadRouteFile({
+    required Activity activity,
+    required Directory outputDir,
+    required IGPSportExportType exportType,
+  }) async {
     final token = await _accessToken();
     final dir = Directory('${outputDir.path}/$name');
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
 
-    final path = File('${dir.path}/${safeFilename(activity.sourceId)}.fit');
+    final ext = exportType == IGPSportExportType.gpx ? 'gpx' : 'fit';
+    final path = File('${dir.path}/${safeFilename(activity.sourceId)}.$ext');
     if (path.existsSync() && path.lengthSync() > 100) {
       return path;
     }
 
-    final response = await _dio.get<Map<String, dynamic>>(
+    await _warmupExportType(exportType);
+
+    final response = await _client.get<Map<String, dynamic>>(
       '$_apiRoot/service/web-gateway/web-analyze/activity/getDownloadUrl/${activity.sourceId}',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Authorization': 'Bearer $token',
+          'Origin': 'https://app.zh.igpsport.com',
+          'Referer': 'https://app.zh.igpsport.com/',
+          'timezone': 'Asia/Shanghai',
+          'qiwu-app-version': '1.0.0',
+        },
+      ),
     );
     final payload = response.data;
     if (payload == null) {
@@ -192,7 +265,7 @@ class IGPSportSource implements SourceAdapter {
       throw StateError('IGPSPORT 下载URL缺失');
     }
 
-    final bytes = await _dio.get<List<int>>(
+    final bytes = await _client.get<List<int>>(
       downloadUrl,
       options: Options(
         responseType: ResponseType.bytes,
@@ -204,7 +277,7 @@ class IGPSportSource implements SourceAdapter {
     }
     await path.writeAsBytes(bytes.data!, flush: true);
     if (path.lengthSync() < 100) {
-      throw StateError('IGPSPORT 下载FIT过小');
+      throw StateError('IGPSPORT 下载文件过小');
     }
     return path;
   }

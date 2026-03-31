@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:xml/xml.dart';
 
 import '../models/activity.dart';
 import '../storage/kv_store.dart';
@@ -148,6 +150,61 @@ class StravaClient {
     return _extractRideRoutesPage(result.data);
   }
 
+  Future<({int activityCount, List<({String id, String? summaryPolyline})> rides})> listRideSummariesPage({
+    DateTime? after,
+    DateTime? before,
+    int page = 1,
+    int perPage = 50,
+  }) async {
+    final token = await _ensureAccessToken();
+    final result = await _getAthleteActivitiesWithToken(
+      token: token,
+      after: after,
+      before: before,
+      page: page,
+      perPage: perPage,
+    );
+    if (result.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      final retried = await _getAthleteActivitiesWithToken(
+        token: refreshed,
+        after: after,
+        before: before,
+        page: page,
+        perPage: perPage,
+      );
+      if (retried.statusCode != 200) {
+        throw StravaException(_extractError(retried));
+      }
+      return _extractRideSummariesPage(retried.data);
+    }
+    if (result.statusCode != 200) {
+      throw StravaException(_extractError(result));
+    }
+    return _extractRideSummariesPage(result.data);
+  }
+
+  Future<List<List<double>>> getActivityRoutePoints({
+    required String activityId,
+    String? summaryPolyline,
+  }) async {
+    try {
+      final gpx = await _tryDownloadActivityGpxPoints(activityId: activityId);
+      if (gpx.length >= 2) return gpx;
+    } catch (_) {}
+
+    try {
+      final stream = await getActivityLatLngStream(activityId: activityId);
+      if (stream.length >= 2) return stream;
+    } catch (_) {}
+
+    if (summaryPolyline != null && summaryPolyline.isNotEmpty) {
+      final pts = _decodePolyline(summaryPolyline);
+      if (pts.length >= 2) return pts;
+    }
+    return const [];
+  }
+
   Future<List<String>> listActivityIds({
     DateTime? after,
     DateTime? before,
@@ -247,11 +304,85 @@ class StravaClient {
     return (activityCount: activities.length, routes: routes);
   }
 
+  ({int activityCount, List<({String id, String? summaryPolyline})> rides}) _extractRideSummariesPage(dynamic data) {
+    final activities = _extractActivities(data);
+    if (activities.isEmpty) return (activityCount: 0, rides: const []);
+
+    final rides = <({String id, String? summaryPolyline})>[];
+    for (final m in activities) {
+      final type = m['type']?.toString();
+      if (type != 'Ride' && type != 'EBikeRide') continue;
+
+      final id = m['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+
+      String? summaryPolyline;
+      final map = m['map'];
+      if (map is Map<String, dynamic>) {
+        final encoded = map['summary_polyline']?.toString();
+        if (encoded != null && encoded.isNotEmpty) {
+          summaryPolyline = encoded;
+        }
+      }
+
+      rides.add((id: id, summaryPolyline: summaryPolyline));
+    }
+    return (activityCount: activities.length, rides: rides);
+  }
+
   List<Map<String, dynamic>> _extractActivities(dynamic data) {
     if (data is List) {
       return data.whereType<Map<String, dynamic>>().toList();
     }
     return const [];
+  }
+
+  Future<List<List<double>>> _tryDownloadActivityGpxPoints({required String activityId}) async {
+    final result = await _downloadActivityGpx(activityId: activityId);
+    if (result.statusCode != 200) return const [];
+    return _extractGpxLatLng(result.data);
+  }
+
+  Future<Response<List<int>>> _downloadActivityGpx({required String activityId}) {
+    return _dio.get<List<int>>(
+      'https://www.strava.com/activities/$activityId/export_gpx',
+      options: Options(
+        responseType: ResponseType.bytes,
+        followRedirects: false,
+        maxRedirects: 0,
+        validateStatus: (status) => status != null && status < 400,
+      ),
+    );
+  }
+
+  List<List<double>> _extractGpxLatLng(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return const [];
+    final text = utf8.decode(bytes, allowMalformed: true);
+    if (text.trim().isEmpty) return const [];
+
+    try {
+      final doc = XmlDocument.parse(text);
+      final points = <List<double>>[];
+
+      for (final e in doc.findAllElements('trkpt')) {
+        final lat = double.tryParse(e.getAttribute('lat') ?? '');
+        final lon = double.tryParse(e.getAttribute('lon') ?? '');
+        if (lat == null || lon == null) continue;
+        points.add([lat, lon]);
+      }
+      if (points.length >= 2) return points;
+
+      for (final e in doc.findAllElements('rtept')) {
+        final lat = double.tryParse(e.getAttribute('lat') ?? '');
+        final lon = double.tryParse(e.getAttribute('lon') ?? '');
+        if (lat == null || lon == null) continue;
+        points.add([lat, lon]);
+      }
+
+      return points;
+    } catch (_) {
+      return const [];
+    }
   }
 
   List<List<double>> _decodePolyline(String encoded) {

@@ -46,5 +46,7 @@ abstract class Keys {
   static const stravaRefreshToken = 'strava.refresh_token';
   static const stravaExpiresAt = 'strava.expires_at';
 
+  static const heatmapSource = 'heatmap.source';
+
   static const lastSyncAtPrefix = 'sync.last_at.';
 }
