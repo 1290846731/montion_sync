@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'features/settings/settings_screen.dart';
 import 'features/sync/sync_screen.dart';
+import 'features/heatmap/heatmap_screen.dart';
 import 'services/app_services.dart';
 import 'services/fit_file_handler.dart';
 import 'storage/kv_store.dart';
@@ -96,6 +97,7 @@ class _HomeState extends State<_Home> {
     final screens = [
       SyncScreen(services: widget.services),
       SettingsScreen(services: widget.services),
+      HeatmapScreen(services: widget.services),
     ];
 
     return Scaffold(
@@ -106,6 +108,7 @@ class _HomeState extends State<_Home> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.sync), label: '同步'),
           NavigationDestination(icon: Icon(Icons.settings), label: '设置'),
+          NavigationDestination(icon: Icon(Icons.map), label: '热力图'),
         ],
       ),
     );

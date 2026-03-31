@@ -97,6 +97,237 @@ class StravaClient {
     );
   }
 
+  Future<List<List<double>>> getActivityLatLngStream({required String activityId}) async {
+    final token = await _ensureAccessToken();
+    final result = await _getStreamsWithToken(token: token, activityId: activityId);
+    if (result.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      final retried = await _getStreamsWithToken(token: refreshed, activityId: activityId);
+      if (retried.statusCode != 200) {
+        throw StravaException(_extractError(retried));
+      }
+      return _extractLatLng(retried.data);
+    }
+    if (result.statusCode != 200) {
+      throw StravaException(_extractError(result));
+    }
+    return _extractLatLng(result.data);
+  }
+
+  Future<({int activityCount, List<List<List<double>>> routes})> listRideRoutesPage({
+    DateTime? after,
+    DateTime? before,
+    int page = 1,
+    int perPage = 50,
+  }) async {
+    final token = await _ensureAccessToken();
+    final result = await _getAthleteActivitiesWithToken(
+      token: token,
+      after: after,
+      before: before,
+      page: page,
+      perPage: perPage,
+    );
+    if (result.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      final retried = await _getAthleteActivitiesWithToken(
+        token: refreshed,
+        after: after,
+        before: before,
+        page: page,
+        perPage: perPage,
+      );
+      if (retried.statusCode != 200) {
+        throw StravaException(_extractError(retried));
+      }
+      return _extractRideRoutesPage(retried.data);
+    }
+    if (result.statusCode != 200) {
+      throw StravaException(_extractError(result));
+    }
+    return _extractRideRoutesPage(result.data);
+  }
+
+  Future<List<String>> listActivityIds({
+    DateTime? after,
+    DateTime? before,
+    int page = 1,
+    int perPage = 50,
+  }) async {
+    final token = await _ensureAccessToken();
+    final result = await _getAthleteActivitiesWithToken(
+      token: token,
+      after: after,
+      before: before,
+      page: page,
+      perPage: perPage,
+    );
+    if (result.statusCode == 401) {
+      final refreshed = await _refreshAccessToken();
+      final retried = await _getAthleteActivitiesWithToken(
+        token: refreshed,
+        after: after,
+        before: before,
+        page: page,
+        perPage: perPage,
+      );
+      if (retried.statusCode != 200) {
+        throw StravaException(_extractError(retried));
+      }
+      return _extractActivityIds(retried.data);
+    }
+    if (result.statusCode != 200) {
+      throw StravaException(_extractError(result));
+    }
+    return _extractActivityIds(result.data);
+  }
+
+  Future<Response<dynamic>> _getStreamsWithToken({
+    required String token,
+    required String activityId,
+  }) {
+    return _dio.get<dynamic>(
+      'https://www.strava.com/api/v3/activities/$activityId/streams',
+      queryParameters: {
+        'keys': 'latlng',
+        'key_by_type': true,
+      },
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+        validateStatus: (status) => status != null,
+      ),
+    );
+  }
+
+  List<List<double>> _extractLatLng(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final latlng = data['latlng'];
+      if (latlng is Map<String, dynamic>) {
+        final points = latlng['data'];
+        return _extractLatLng(points);
+      }
+    } else if (data is List) {
+      final latlngStream = data.whereType<Map<String, dynamic>>().firstWhere(
+            (m) => m['type']?.toString() == 'latlng',
+            orElse: () => const {},
+          );
+      final points = latlngStream['data'];
+      return _extractLatLng(points);
+    } else if (data is Iterable) {
+      return data
+          .whereType<List>()
+          .where((e) => e.length >= 2)
+          .map<List<double>>((e) => [
+                (e[0] as num).toDouble(),
+                (e[1] as num).toDouble(),
+              ])
+          .toList();
+    }
+    return const [];
+  }
+
+  ({int activityCount, List<List<List<double>>> routes}) _extractRideRoutesPage(dynamic data) {
+    final activities = _extractActivities(data);
+    if (activities.isEmpty) return (activityCount: 0, routes: const []);
+
+    final routes = <List<List<double>>>[];
+    for (final m in activities) {
+      final type = m['type']?.toString();
+      if (type != 'Ride' && type != 'EBikeRide') continue;
+      final map = m['map'];
+      if (map is Map<String, dynamic>) {
+        final encoded = map['summary_polyline']?.toString();
+        if (encoded != null && encoded.isNotEmpty) {
+          final pts = _decodePolyline(encoded);
+          if (pts.length >= 2) routes.add(pts);
+        }
+      }
+    }
+
+    return (activityCount: activities.length, routes: routes);
+  }
+
+  List<Map<String, dynamic>> _extractActivities(dynamic data) {
+    if (data is List) {
+      return data.whereType<Map<String, dynamic>>().toList();
+    }
+    return const [];
+  }
+
+  List<List<double>> _decodePolyline(String encoded) {
+    var index = 0;
+    var lat = 0;
+    var lng = 0;
+    final points = <List<double>>[];
+
+    while (index < encoded.length) {
+      var shift = 0;
+      var result = 0;
+      while (true) {
+        final b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+        if (b < 0x20) break;
+      }
+      final dlat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      while (true) {
+        final b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+        if (b < 0x20) break;
+      }
+      final dlng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      points.add([lat / 1e5, lng / 1e5]);
+    }
+
+    return points;
+  }
+
+  Future<Response<dynamic>> _getAthleteActivitiesWithToken({
+    required String token,
+    DateTime? after,
+    DateTime? before,
+    required int page,
+    required int perPage,
+  }) {
+    return _dio.get<dynamic>(
+      'https://www.strava.com/api/v3/athlete/activities',
+      queryParameters: {
+        if (after != null) 'after': after.toUtc().millisecondsSinceEpoch ~/ 1000,
+        if (before != null) 'before': before.toUtc().millisecondsSinceEpoch ~/ 1000,
+        'page': page,
+        'per_page': perPage,
+      },
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+        validateStatus: (status) => status != null,
+      ),
+    );
+  }
+
+  List<String> _extractActivityIds(dynamic data) {
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .where((m) {
+            final t = m['type']?.toString();
+            if (t == null || t.isEmpty) return false;
+            return t == 'Ride' || t == 'EBikeRide';
+          })
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
+
   Future<Response<Map<String, dynamic>>> _uploadWithToken({
     required String token,
     required File file,

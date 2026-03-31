@@ -158,7 +158,7 @@ class _SyncScreenState extends State<SyncScreen> {
     final sources = widget.services.sourceRegistry.all;
     final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
     final title = target == 'intervals' ? '同步到 Intervals.icu' : '同步到 Strava';
-    final manualLabel = target == 'intervals' ? '选择本地 .fit 同步到 Intervals.icu' : '选择本地 .fit 同步到 Strava';
+    final manualLabel = target == 'intervals' ? '选择本地 .fit/.gpx 同步到 Intervals.icu' : '选择本地 .fit/.gpx 同步到 Strava';
 
     return Column(
       children: [

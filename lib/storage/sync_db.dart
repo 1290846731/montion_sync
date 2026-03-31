@@ -16,6 +16,7 @@ class SyncRecord {
     this.activityName,
     this.activityTime,
     this.activity,
+    this.route,
   });
 
   final String source;
@@ -28,6 +29,7 @@ class SyncRecord {
   final String? activityName;
   final DateTime? activityTime;
   final Activity? activity;
+  final List<List<double>>? route;
 }
 
 class SyncDb {
@@ -40,7 +42,7 @@ class SyncDb {
     final dbPath = p.join(dir.path, 'sync_state.db');
     final db = await openDatabase(
       dbPath,
-      version: 4,
+      version: 5,
       onCreate: (db, version) async {
         await db.execute(
           'CREATE TABLE synced('
@@ -54,6 +56,7 @@ class SyncDb {
           'activity_name TEXT, '
           'activity_time INTEGER, '
           'activity_data TEXT, '
+          'route_data TEXT, '
           'PRIMARY KEY(source, source_id, target)'
           ')',
         );
@@ -98,6 +101,9 @@ class SyncDb {
           await db.execute('DROP INDEX IF EXISTS idx_synced_uploaded_at');
           await db.execute('CREATE INDEX idx_synced_uploaded_at ON synced(uploaded_at)');
         }
+        if (oldVersion < 5) {
+          await db.execute('ALTER TABLE synced ADD COLUMN route_data TEXT;');
+        }
       },
     );
     return SyncDb._(db);
@@ -128,8 +134,23 @@ class SyncDb {
         'activity_name': record.activityName,
         'activity_time': record.activityTime?.millisecondsSinceEpoch,
         'activity_data': record.activity != null ? jsonEncode(record.activity!.toJson()) : null,
+        'route_data': record.route != null ? jsonEncode(record.route) : null,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> setRoute({
+    required String source,
+    required String sourceId,
+    required String target,
+    required List<List<double>> route,
+  }) async {
+    await _db.update(
+      'synced',
+      {'route_data': jsonEncode(route)},
+      where: 'source = ? AND source_id = ? AND target = ?',
+      whereArgs: [source, sourceId, target],
     );
   }
 
@@ -156,6 +177,13 @@ class SyncDb {
                   : null,
               activity: row['activity_data'] != null
                   ? Activity.fromJson(jsonDecode(row['activity_data'] as String))
+                  : null,
+              route: row['route_data'] != null
+                  ? (jsonDecode(row['route_data'] as String) as List)
+                      .whereType<List>()
+                      .where((e) => e.length >= 2)
+                      .map<List<double>>((e) => [e[0].toDouble(), e[1].toDouble()])
+                      .toList()
                   : null,
             ))
         .toList();

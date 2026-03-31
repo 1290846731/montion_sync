@@ -24,6 +24,12 @@ dependencies:
   permission_handler: ^11.3.0
   device_info_plus: ^9.0.3
   app_links: ^6.3.3
+  xml: ^6.5.0
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  fit_sdk: ^0.2.0
+  amap_map: ^1.0.15
+  x_amap_base: ^1.0.3
 
 
 dev_dependencies:

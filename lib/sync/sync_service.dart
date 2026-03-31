@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:fit_sdk/fit_sdk.dart' as fit;
+import 'package:xml/xml.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -84,6 +86,9 @@ class SyncService {
     bool ignoreSince = false,
   }) async {
     final target = _currentTarget();
+    if (target == SyncTarget.strava && !await _stravaClient.isConfigured()) {
+      throw StateError('请先绑定strava');
+    }
 
     final source = _sourceRegistry.byName(sourceName);
     if (!await source.isConfigured()) {
@@ -133,6 +138,12 @@ class SyncService {
     try {
       final source = _sourceRegistry.byName(sourceName);
       final fit = await source.downloadFit(activity: sourceActivity, outputDir: outputRoot);
+      List<List<double>> route = const [];
+      try {
+        route = await _parseFitRoute(fit);
+      } catch (_) {
+        route = const [];
+      }
       final externalId = '${sourceActivity.source}:${sourceActivity.sourceId}.fit';
       final remoteId = switch (target) {
         SyncTarget.strava => await _uploadToStrava(file: fit, activity: sourceActivity, externalId: externalId),
@@ -149,6 +160,7 @@ class SyncService {
         stravaActivityId: remoteId.isEmpty ? null : remoteId,
         activityName: sourceActivity.name,
         activityTime: sourceActivity.startTime,
+        route: route.isEmpty ? null : route,
         activity: sourceActivity,
       );
       await _syncDb.setRecord(record);
@@ -178,7 +190,7 @@ class SyncService {
     required String externalId,
   }) async {
     if (!await _stravaClient.isConfigured()) {
-      throw StateError('Strava 未授权');
+      throw StateError('请先绑定strava');
     }
     return await _stravaClient.uploadActivityFile(
       file: file,
@@ -237,6 +249,9 @@ class SyncService {
     required String sourceLabel,
   }) async {
     final target = _currentTarget();
+    if (target == SyncTarget.strava && !await _stravaClient.isConfigured()) {
+      throw StateError('请先绑定strava');
+    }
 
     final hash = await sha1File(file);
     final source = 'manual.$sourceLabel';
@@ -267,6 +282,19 @@ class SyncService {
       return record;
     }
 
+    List<List<double>>? route;
+    final lowerExt = ext.toLowerCase();
+    if (lowerExt == '.gpx') {
+      route = await _parseGpxRoute(file);
+    } else if (lowerExt == '.fit') {
+      try {
+        final pts = await _parseFitRoute(file);
+        route = pts.isEmpty ? null : pts;
+      } catch (_) {
+        route = null;
+      }
+    }
+
     final externalId = '$source:$hash$ext';
     try {
       final remoteId = switch (target) {
@@ -282,6 +310,7 @@ class SyncService {
         uploadedAt: DateTime.now(),
         stravaActivityId: remoteId.isEmpty ? null : remoteId,
         activityName: activity.name,
+        route: route,
         activity: activity,
       );
       await _syncDb.setRecord(record);
@@ -302,6 +331,57 @@ class SyncService {
       await _syncDb.setRecord(record);
       return record;
     }
+  }
+
+  Future<List<List<double>>> _parseGpxRoute(File file) async {
+    final text = await file.readAsString();
+    final doc = XmlDocument.parse(text);
+    final points = <List<double>>[];
+    for (final trkpt in doc.findAllElements('trkpt')) {
+      final latStr = trkpt.getAttribute('lat');
+      final lonStr = trkpt.getAttribute('lon');
+      if (latStr == null || lonStr == null) continue;
+      final lat = double.tryParse(latStr);
+      final lon = double.tryParse(lonStr);
+      if (lat == null || lon == null) continue;
+      points.add([lat, lon]);
+    }
+    return points;
+  }
+
+  Future<List<List<double>>> _parseFitRoute(File file) async {
+    final bytes = await file.readAsBytes();
+    final decoder = fit.Decode();
+    final points = <List<double>>[];
+
+    decoder.onMesg = (mesg) {
+      if (mesg.name.toLowerCase() != 'record') return;
+      final latRaw = mesg.getFieldValue(0);
+      final lonRaw = mesg.getFieldValue(1);
+      if (latRaw is! num || lonRaw is! num) return;
+
+      final lat = _fitMaybeToDegrees(latRaw);
+      final lon = _fitMaybeToDegrees(lonRaw);
+      if (lat.isNaN || lon.isNaN) return;
+      if (lat.abs() > 90 || lon.abs() > 180) return;
+      points.add([lat, lon]);
+    };
+
+    decoder.read(bytes);
+
+    if (points.length <= 3000) return points;
+    final step = (points.length / 3000).ceil();
+    final sampled = <List<double>>[];
+    for (var i = 0; i < points.length; i += step) {
+      sampled.add(points[i]);
+    }
+    return sampled;
+  }
+
+  double _fitMaybeToDegrees(num v) {
+    final d = v.toDouble();
+    if (d.abs() <= 180) return d;
+    return d * (180.0 / 2147483648.0);
   }
 
   Future<DateTime?> _loadLastSyncAt(String sourceName) async {
