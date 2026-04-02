@@ -16,12 +16,48 @@ class StravaSyncApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final seed = Colors.deepOrange;
     return MaterialApp(
       title: 'Strava Sync',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
         useMaterial3: true,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: const AppBarTheme(
+          centerTitle: false,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          showCloseIcon: true,
+        ),
       ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
+        useMaterial3: true,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        appBarTheme: const AppBarTheme(
+          centerTitle: false,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          showCloseIcon: true,
+        ),
+      ),
+      themeMode: ThemeMode.system,
       home: _Home(services: services),
     );
   }
@@ -96,19 +132,19 @@ class _HomeState extends State<_Home> {
   Widget build(BuildContext context) {
     final screens = [
       SyncScreen(services: widget.services),
-      SettingsScreen(services: widget.services),
       HeatmapScreen(services: widget.services),
+      SettingsScreen(services: widget.services),
     ];
 
     return Scaffold(
-      body: SafeArea(child: screens[_index]),
+      body: screens[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.sync), label: '同步'),
-          NavigationDestination(icon: Icon(Icons.settings), label: '设置'),
           NavigationDestination(icon: Icon(Icons.map), label: '热力图'),
+          NavigationDestination(icon: Icon(Icons.settings), label: '设置'),
         ],
       ),
     );

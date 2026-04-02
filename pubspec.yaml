@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 0.1.0+1
 
 environment:
-  sdk: ^3.11.3
+  sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -30,6 +30,7 @@ dependencies:
   fit_sdk: ^0.2.0
   amap_map: ^1.0.15
   x_amap_base: ^1.0.3
+  gal: ^2.3.0
 
 
 dev_dependencies:

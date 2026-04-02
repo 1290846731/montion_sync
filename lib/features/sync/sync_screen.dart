@@ -159,87 +159,109 @@ class _SyncScreenState extends State<SyncScreen> {
     final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
     final title = target == 'intervals' ? '同步到 Intervals.icu' : '同步到 Strava';
     final manualLabel = target == 'intervals' ? '选择本地 .fit/.gpx 同步到 Intervals.icu' : '选择本地 .fit/.gpx 同步到 Strava';
+    final scheme = Theme.of(context).colorScheme;
 
-    return Column(
-      children: [
-        Padding(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          if (_syncing)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshLatest,
+        child: ListView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _sourceName,
-                items: [
-                  for (final s in sources) DropdownMenuItem(value: s.name, child: Text(s.displayName)),
-                ],
-                onChanged: _syncing ? null : (value) => setState(() => _sourceName = value),
-                decoration: const InputDecoration(labelText: '数据源'),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
+          children: [
+            Card(
+              color: scheme.surfaceContainerHighest,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('快速操作', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _sourceName,
+                      items: [
+                        for (final s in sources) DropdownMenuItem(value: s.name, child: Text(s.displayName)),
+                      ],
+                      onChanged: _syncing ? null : (value) => setState(() => _sourceName = value),
+                      decoration: const InputDecoration(labelText: '数据源'),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
                       onPressed: _syncing ? null : _syncNow,
-                      icon: _syncing
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.sync),
-                      label: Text(_syncing ? '同步中…' : '批量开始同步'),
+                      icon: const Icon(Icons.sync),
+                      label: const Text('批量开始同步'),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Text('拉取最新'),
-                  const SizedBox(width: 8),
-                  DropdownButton<int>(
-                    value: _latestLimit,
-                    items: List.generate(10, (i) => i + 1)
-                        .map((n) => DropdownMenuItem(value: n, child: Text('$n 条')))
-                        .toList(),
-                    onChanged: _syncing ? null : (val) {
-                      if (val != null) setState(() => _latestLimit = val);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: _syncing ? null : _syncLatestN,
-                      icon: const Icon(Icons.download),
-                      label: const Text('同步指定条数'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Text('拉取最新', style: Theme.of(context).textTheme.labelLarge),
+                        const SizedBox(width: 8),
+                        DropdownButton<int>(
+                          value: _latestLimit,
+                          items: List.generate(10, (i) => i + 1)
+                              .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
+                              .toList(),
+                          onChanged: _syncing
+                              ? null
+                              : (val) {
+                                  if (val != null) setState(() => _latestLimit = val);
+                                },
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: FilledButton.tonalIcon(
+                            onPressed: _syncing ? null : _syncLatestN,
+                            icon: const Icon(Icons.download),
+                            label: const Text('同步'),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('手动导入文件'),
+                      subtitle: Text(manualLabel),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _syncing ? null : () => _importAndUpload('local_fit'),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              const Text('手动导入', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  FilledButton.tonal(
-                    onPressed: _syncing ? null : () => _importAndUpload('local_fit'),
-                    child: Text(manualLabel),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _refreshLatest,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemBuilder: (context, index) {
-                final record = _latest[index];
-                
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: Text('最近记录', style: Theme.of(context).textTheme.titleMedium)),
+                IconButton(
+                  tooltip: '刷新',
+                  onPressed: _syncing ? null : _refreshLatest,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            if (_latest.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text('暂无记录', style: Theme.of(context).textTheme.bodyMedium),
+              )
+            else
+              ..._latest.map((record) {
                 final activityTime = record.activity?.startTime ?? record.activityTime;
                 final timeStr = activityTime != null
                     ? '${activityTime.year}-${activityTime.month.toString().padLeft(2, '0')}-${activityTime.day.toString().padLeft(2, '0')} ${activityTime.hour.toString().padLeft(2, '0')}:${activityTime.minute.toString().padLeft(2, '0')}'
@@ -247,57 +269,64 @@ class _SyncScreenState extends State<SyncScreen> {
                 final nameStr = record.activity?.name ?? record.activityName ?? '未知运动';
                 final sourceStr = record.source;
 
-                final title = '$sourceStr - $nameStr';
-                final subtitle = '$timeStr\n状态: ${record.status}${record.stravaActivityId == null ? '' : ' → ${record.stravaActivityId}'}';
-
-                final statusIcon = switch (record.status) {
-                  'success' => const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                  'duplicate' => const Icon(Icons.copy, color: Colors.orange, size: 20),
-                  _ => const Icon(Icons.error, color: Colors.red, size: 20),
-                };
-
                 final canResync = !record.source.startsWith('manual.');
+                final statusText = record.status == 'success'
+                    ? '成功'
+                    : record.status == 'duplicate'
+                        ? '重复'
+                        : '失败';
+                final statusColor = record.status == 'success'
+                    ? scheme.primary
+                    : record.status == 'duplicate'
+                        ? scheme.tertiary
+                        : scheme.error;
 
-                return ListTile(
-                  title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(subtitle),
-                  isThreeLine: true,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      statusIcon,
-                      if (canResync) ...[
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.sync),
-                          tooltip: '再次同步',
-                          onPressed: _syncing ? null : () => _reSyncRecord(record),
-                        ),
-                      ],
-                    ],
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(
+                        '$sourceStr · $nameStr',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '$timeStr${record.stravaActivityId == null ? '' : '\nStrava: ${record.stravaActivityId}'}',
+                      ),
+                      isThreeLine: record.stravaActivityId != null,
+                      leading: CircleAvatar(
+                        backgroundColor: statusColor.withValues(alpha: 0.15),
+                        foregroundColor: statusColor,
+                        child: Text(statusText),
+                      ),
+                      trailing: canResync
+                          ? IconButton(
+                              icon: const Icon(Icons.sync),
+                              tooltip: '再次同步',
+                              onPressed: _syncing ? null : () => _reSyncRecord(record),
+                            )
+                          : null,
+                      onTap: record.message == null
+                          ? null
+                          : () {
+                              showDialog<void>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('详情'),
+                                  content: Text(record.message!),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+                                  ],
+                                ),
+                              );
+                            },
+                    ),
                   ),
-                  onTap: record.message == null
-                      ? null
-                      : () {
-                          showDialog<void>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('详情'),
-                              content: Text(record.message!),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
-                              ],
-                            ),
-                          );
-                        },
                 );
-              },
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemCount: _latest.length,
-            ),
-          ),
+              }),
+            const SizedBox(height: 24),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
