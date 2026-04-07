@@ -38,7 +38,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   final Key _mapKey = UniqueKey();
   final GlobalKey _exportKey = GlobalKey();
   AMapController? _amapController;
-  static const AMapApiKey _amapKeys = AMapApiKey(androidKey: 'fa1e0dca85328840c53cc33522854cf3', iosKey: '');
+  static const AMapApiKey _amapKeys = AMapApiKey(androidKey: 'fa1e0dca85328840c53cc33522854cf3', iosKey: '43c277d17d9481607a7ddd3745dec466');
   static const AMapPrivacyStatement _amapPrivacy = AMapPrivacyStatement(
     hasContains: true,
     hasShow: true,
@@ -665,16 +665,20 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   @override
   Widget build(BuildContext context) {
     final strings = AppI18n.s(context);
-    AMapInitializer.init(context, apiKey: _amapKeys);
-    AMapInitializer.updatePrivacyAgree(_amapPrivacy);
     final scheme = Theme.of(context).colorScheme;
     final sourceLabel = _sourceLabel(_source);
+    final showMap = _loadError == null || _routes.isNotEmpty || _loading;
     return Scaffold(
       appBar: AppBar(
         title: Text(strings.heatmapTitle),
         actions: [
           IconButton(
-            onPressed: _exporting ? null : _exportHeatmap,
+            onPressed: _showControlsSheet,
+            icon: const Icon(Icons.tune),
+            tooltip: strings.tooltipHeatmapSettings,
+          ),
+          IconButton(
+            onPressed: !showMap || _exporting ? null : _exportHeatmap,
             icon: _exporting
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.download_outlined),
@@ -686,7 +690,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             tooltip: strings.tooltipFetchFrom(sourceLabel),
           ),
           IconButton(
-            onPressed: _routes.isEmpty ? null : _centerToRoutes,
+            onPressed: !showMap || _routes.isEmpty ? null : _centerToRoutes,
             icon: const Icon(Icons.my_location),
             tooltip: strings.tooltipCenterToRoutes,
           ),
@@ -703,78 +707,108 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          RepaintBoundary(
-            key: _exportKey,
-            child: Stack(
-              children: [
-                AMapWidget(
-                  key: _mapKey,
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(30, 120),
-                    zoom: 11,
+      body: !showMap
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.map_outlined, size: 44, color: scheme.onSurfaceVariant),
+                      const SizedBox(height: 12),
+                      Text(
+                        _loadError ?? strings.heatmapNeedAccountHint,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.tonalIcon(
+                        onPressed: _showControlsSheet,
+                        icon: const Icon(Icons.tune),
+                        label: Text(strings.tooltipHeatmapSettings),
+                      ),
+                    ],
                   ),
-                  mapType: MapType.night,
-                  onMapCreated: (c) {
-                    _amapController = c;
-                    _mapReady = true;
-                    _centerToRoutes();
-                  },
-                  polylines: _buildPolylines(),
                 ),
-                if (!_exporting)
-                  Positioned(
-                    left: 12,
-                    top: 12,
-                    child: SafeArea(
-                      bottom: false,
-                      child: Material(
-                        color: scheme.surfaceContainerHighest,
-                        elevation: 1,
-                        shape: const StadiumBorder(),
-                        child: InkWell(
-                          customBorder: const StadiumBorder(),
-                          onTap: _showControlsSheet,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.tune, size: 18),
-                                const SizedBox(width: 8),
-                                Text(
-                                  '$sourceLabel · $_year',
-                                  style: Theme.of(context).textTheme.labelLarge,
+              ),
+            )
+          : Stack(
+              children: [
+                RepaintBoundary(
+                  key: _exportKey,
+                  child: Stack(
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          AMapInitializer.updatePrivacyAgree(_amapPrivacy);
+                          AMapInitializer.init(context, apiKey: _amapKeys);
+                          return AMapWidget(
+                            key: _mapKey,
+                            initialCameraPosition: const CameraPosition(
+                              target: LatLng(30, 120),
+                              zoom: 11,
+                            ),
+                            mapType: MapType.night,
+                            onMapCreated: (c) {
+                              _amapController = c;
+                              _mapReady = true;
+                              _centerToRoutes();
+                            },
+                            polylines: _buildPolylines(),
+                          );
+                        },
+                      ),
+                      if (!_exporting)
+                        Positioned(
+                          left: 12,
+                          top: 12,
+                          child: SafeArea(
+                            bottom: false,
+                            child: Material(
+                              color: scheme.surfaceContainerHighest,
+                              elevation: 1,
+                              shape: const StadiumBorder(),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.tune, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '$sourceLabel · $_year',
+                                      style: Theme.of(context).textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: scheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        _routes.isEmpty ? '0' : '${_routes.length}',
+                                        style:
+                                            Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onPrimaryContainer),
+                                      ),
+                                    ),
+                                    if (_loading) ...[
+                                      const SizedBox(width: 10),
+                                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                                    ],
+                                  ],
                                 ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: scheme.primaryContainer,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    _routes.isEmpty ? '0' : '${_routes.length}',
-                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onPrimaryContainer),
-                                  ),
-                                ),
-                                if (_loading) ...[
-                                  const SizedBox(width: 10),
-                                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                                ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }

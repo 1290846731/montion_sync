@@ -1,4 +1,10 @@
 PODS:
+  - AMap3DMap (11.1.000):
+    - AMapFoundation (>= 1.8.6)
+  - amap_map (1.0.8):
+    - AMap3DMap
+    - Flutter
+  - AMapFoundation (1.8.6)
   - app_links (6.4.1):
     - Flutter
   - device_info_plus (0.0.1):
@@ -43,6 +49,9 @@ PODS:
     - FlutterMacOS
   - flutter_web_auth_2 (5.0.0):
     - Flutter
+  - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
   - SDWebImage (5.21.5):
@@ -59,12 +68,14 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - amap_map (from `.symlinks/plugins/amap_map/ios`)
   - app_links (from `.symlinks/plugins/app_links/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
   - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - flutter_web_auth_2 (from `.symlinks/plugins/flutter_web_auth_2/ios`)
+  - gal (from `.symlinks/plugins/gal/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
@@ -72,12 +83,16 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AMap3DMap
+    - AMapFoundation
     - DKImagePickerController
     - DKPhotoGallery
     - SDWebImage
     - SwiftyGif
 
 EXTERNAL SOURCES:
+  amap_map:
+    :path: ".symlinks/plugins/amap_map/ios"
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
   device_info_plus:
@@ -90,6 +105,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
   flutter_web_auth_2:
     :path: ".symlinks/plugins/flutter_web_auth_2/ios"
+  gal:
+    :path: ".symlinks/plugins/gal/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   shared_preferences_foundation:
@@ -100,6 +117,9 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
+  AMap3DMap: 1890470d9e16642a975b2fd6ceaa8580dd65067f
+  amap_map: a681a1441e8b707efafde356c3cd388148495524
+  AMapFoundation: d539ff40e882c872bef6c6682bf1e3a2d4a03026
   app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
   device_info_plus: 335f3ce08d2e174b9fdc3db3db0f4e3b1f66bd89
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
@@ -108,6 +128,7 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   flutter_web_auth_2: 646fc9df97a01c59e5eea99b237da2c6360f8439
+  gal: baecd024ebfd13c441269ca7404792a7152fde89
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb

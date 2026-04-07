@@ -78,6 +78,9 @@ class AppStrings {
   String get tooltipSaveToAlbum => _zh ? '保存到相册' : 'Save to Photos';
   String tooltipFetchFrom(String sourceLabel) => _zh ? '从 $sourceLabel 获取' : 'Fetch from $sourceLabel';
   String get tooltipCenterToRoutes => _zh ? '定位到轨迹' : 'Center on route';
+  String get tooltipHeatmapSettings => _zh ? '热力图设置' : 'Heatmap settings';
+  String get heatmapNeedAccountHint =>
+      _zh ? '请先在设置里绑定/配置账号，然后再加载热力图。' : 'Configure an account in Settings, then load the heatmap.';
   String get saveFailedNotReady => _zh ? '保存失败：画面未就绪' : 'Save failed: view not ready';
   String get saveFailedImageGen => _zh ? '保存失败：生成图片失败' : 'Save failed: failed to render image';
   String get saveFailedNoAlbumPerm => _zh ? '保存失败：没有相册权限' : 'Save failed: no Photos permission';
