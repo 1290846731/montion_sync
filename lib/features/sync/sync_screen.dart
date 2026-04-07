@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../../i18n/app_i18n.dart';
 import '../../services/app_services.dart';
 import '../../storage/kv_store.dart';
 import '../../storage/sync_db.dart';
@@ -25,10 +26,6 @@ class _SyncScreenState extends State<SyncScreen> {
   String _currentTarget() {
     final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
     return target == 'intervals' ? 'intervals' : 'strava';
-  }
-
-  String _successTip(String target) {
-    return target == 'intervals' ? '同步ICU成功' : '同步到Strava成功';
   }
 
   @override
@@ -54,13 +51,15 @@ class _SyncScreenState extends State<SyncScreen> {
       final results = await widget.services.syncService.syncNow(sourceName: sourceName);
       await _refreshLatest();
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_successTip(target)}：${results.length} 条')),
+        SnackBar(content: Text(s.syncSuccessCount(target, results.length))),
       );
     } catch (e) {
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('批量同步失败：$e')),
+        SnackBar(content: Text(s.batchSyncFailed(s.errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _syncing = false);
@@ -80,13 +79,15 @@ class _SyncScreenState extends State<SyncScreen> {
       );
       await _refreshLatest();
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${_successTip(target)}：${results.length} 条')),
+        SnackBar(content: Text(s.syncSuccessCount(target, results.length))),
       );
     } catch (e) {
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('拉取同步失败：$e')),
+        SnackBar(content: Text(s.fetchSyncFailed(s.errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _syncing = false);
@@ -99,19 +100,21 @@ class _SyncScreenState extends State<SyncScreen> {
       final newRecord = await widget.services.syncService.reSyncRecord(record);
       await _refreshLatest();
       if (!mounted) return;
+      final s = AppI18n.s(context);
       if (newRecord.status == 'success') {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_successTip(newRecord.target))),
+          SnackBar(content: Text(s.syncSuccessTip(newRecord.target))),
         );
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('重新同步完成：${newRecord.status}')),
+        SnackBar(content: Text(s.resyncDone(newRecord.status))),
       );
     } catch (e) {
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('重新同步失败：$e')),
+        SnackBar(content: Text(s.resyncFailed(s.errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _syncing = false);
@@ -126,9 +129,11 @@ class _SyncScreenState extends State<SyncScreen> {
         type: FileType.custom,
         allowedExtensions: const ['fit', 'gpx', 'tcx'],
       );
+      if (!mounted) return;
       final path = result?.files.single.path;
       if (path == null || path.isEmpty) {
-        throw StateError('未选择文件（或系统未返回路径）');
+        final s = AppI18n.s(context);
+        throw StateError(s.errNoFileSelected);
       }
       final record = await widget.services.syncService.uploadLocalFile(
         file: File(path),
@@ -136,17 +141,19 @@ class _SyncScreenState extends State<SyncScreen> {
       );
       await _refreshLatest();
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            record.status == 'success' ? _successTip(record.target) : '上传完成：${record.status}',
+            record.status == 'success' ? s.syncSuccessTip(record.target) : s.uploadDone(record.status),
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('上传失败：$e')),
+        SnackBar(content: Text(s.uploadFailed(s.errorText(e)))),
       );
     } finally {
       if (mounted) setState(() => _syncing = false);
@@ -155,10 +162,11 @@ class _SyncScreenState extends State<SyncScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppI18n.s(context);
     final sources = widget.services.sourceRegistry.all;
     final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
-    final title = target == 'intervals' ? '同步到 Intervals.icu' : '同步到 Strava';
-    final manualLabel = target == 'intervals' ? '选择本地 .fit/.gpx 同步到 Intervals.icu' : '选择本地 .fit/.gpx 同步到 Strava';
+    final title = target == 'intervals' ? s.syncTitleToIntervals : s.syncTitleToStrava;
+    final manualLabel = s.manualImportLabel(target);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -190,7 +198,7 @@ class _SyncScreenState extends State<SyncScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('快速操作', style: Theme.of(context).textTheme.titleMedium),
+                    Text(s.quickActions, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: _sourceName,
@@ -198,18 +206,18 @@ class _SyncScreenState extends State<SyncScreen> {
                         for (final s in sources) DropdownMenuItem(value: s.name, child: Text(s.displayName)),
                       ],
                       onChanged: _syncing ? null : (value) => setState(() => _sourceName = value),
-                      decoration: const InputDecoration(labelText: '数据源'),
+                      decoration: InputDecoration(labelText: s.dataSource),
                     ),
                     const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: _syncing ? null : _syncNow,
                       icon: const Icon(Icons.sync),
-                      label: const Text('批量开始同步'),
+                      label: Text(s.batchSyncStart),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Text('拉取最新', style: Theme.of(context).textTheme.labelLarge),
+                        Text(s.pullLatest, style: Theme.of(context).textTheme.labelLarge),
                         const SizedBox(width: 8),
                         DropdownButton<int>(
                           value: _latestLimit,
@@ -227,7 +235,7 @@ class _SyncScreenState extends State<SyncScreen> {
                           child: FilledButton.tonalIcon(
                             onPressed: _syncing ? null : _syncLatestN,
                             icon: const Icon(Icons.download),
-                            label: const Text('同步'),
+                            label: Text(s.sync),
                           ),
                         ),
                       ],
@@ -235,7 +243,7 @@ class _SyncScreenState extends State<SyncScreen> {
                     const SizedBox(height: 12),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('手动导入文件'),
+                      title: Text(s.manualImport),
                       subtitle: Text(manualLabel),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _syncing ? null : () => _importAndUpload('local_fit'),
@@ -247,9 +255,9 @@ class _SyncScreenState extends State<SyncScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: Text('最近记录', style: Theme.of(context).textTheme.titleMedium)),
+                Expanded(child: Text(s.recentRecords, style: Theme.of(context).textTheme.titleMedium)),
                 IconButton(
-                  tooltip: '刷新',
+                  tooltip: s.refresh,
                   onPressed: _syncing ? null : _refreshLatest,
                   icon: const Icon(Icons.refresh),
                 ),
@@ -258,23 +266,23 @@ class _SyncScreenState extends State<SyncScreen> {
             if (_latest.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text('暂无记录', style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(s.noRecords, style: Theme.of(context).textTheme.bodyMedium),
               )
             else
               ..._latest.map((record) {
                 final activityTime = record.activity?.startTime ?? record.activityTime;
                 final timeStr = activityTime != null
                     ? '${activityTime.year}-${activityTime.month.toString().padLeft(2, '0')}-${activityTime.day.toString().padLeft(2, '0')} ${activityTime.hour.toString().padLeft(2, '0')}:${activityTime.minute.toString().padLeft(2, '0')}'
-                    : '未知时间';
-                final nameStr = record.activity?.name ?? record.activityName ?? '未知运动';
+                    : s.unknownTime;
+                final nameStr = record.activity?.name ?? record.activityName ?? s.unknownSport;
                 final sourceStr = record.source;
 
                 final canResync = !record.source.startsWith('manual.');
                 final statusText = record.status == 'success'
-                    ? '成功'
+                    ? s.statusSuccess
                     : record.status == 'duplicate'
-                        ? '重复'
-                        : '失败';
+                        ? s.statusDuplicate
+                        : s.statusFailed;
                 final statusColor = record.status == 'success'
                     ? scheme.primary
                     : record.status == 'duplicate'
@@ -301,7 +309,7 @@ class _SyncScreenState extends State<SyncScreen> {
                       trailing: canResync
                           ? IconButton(
                               icon: const Icon(Icons.sync),
-                              tooltip: '再次同步',
+                              tooltip: s.tooltipResync,
                               onPressed: _syncing ? null : () => _reSyncRecord(record),
                             )
                           : null,
@@ -311,10 +319,10 @@ class _SyncScreenState extends State<SyncScreen> {
                               showDialog<void>(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text('详情'),
+                                  title: Text(s.details),
                                   content: Text(record.message!),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+                                    TextButton(onPressed: () => Navigator.pop(context), child: Text(s.close)),
                                   ],
                                 ),
                               );

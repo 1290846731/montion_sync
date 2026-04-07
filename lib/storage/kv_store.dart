@@ -29,6 +29,8 @@ class KvStore {
 }
 
 abstract class Keys {
+  static const appLanguage = 'app.language';
+
   static const igpsportUsername = 'igpsport.username';
   static const igpsportPassword = 'igpsport.password';
   static const igpsportAccessToken = 'igpsport.access_token';

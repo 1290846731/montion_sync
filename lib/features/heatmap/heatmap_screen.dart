@@ -11,6 +11,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:xml/xml.dart';
 import 'package:x_amap_base/x_amap_base.dart';
+
+import '../../i18n/app_i18n.dart';
 import '../../services/app_services.dart';
 import '../../sources/igpsport_source.dart';
 import '../../storage/kv_store.dart';
@@ -67,11 +69,11 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     };
   }
 
-  String _sourceSubtitle(HeatmapSource s) {
-    return switch (s) {
-      HeatmapSource.strava => '通过 Strava API 拉取轨迹',
-      HeatmapSource.igpsport => '从 IGPSPORT 下载 GPX/FIT 解析',
-      HeatmapSource.onelap => '从 顽鹿 OneLap 下载 FIT 解析',
+  String _sourceSubtitle(AppStrings strings, HeatmapSource source) {
+    return switch (source) {
+      HeatmapSource.strava => strings.language == AppLanguage.zh ? '通过 Strava API 拉取轨迹' : 'Fetch routes via Strava API',
+      HeatmapSource.igpsport => strings.language == AppLanguage.zh ? '从 IGPSPORT 下载 GPX/FIT 解析' : 'Download & parse GPX/FIT from IGPSPORT',
+      HeatmapSource.onelap => strings.language == AppLanguage.zh ? '从 顽鹿 OneLap 下载 FIT 解析' : 'Download & parse FIT from OneLap',
     };
   }
 
@@ -84,6 +86,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   Future<void> _exportHeatmap() async {
     if (_exporting) return;
     final messenger = ScaffoldMessenger.of(context);
+    final strings = AppI18n.s(context);
     final pixelRatio = MediaQuery.devicePixelRatioOf(context).clamp(1.0, 3.0);
     setState(() => _exporting = true);
     try {
@@ -93,7 +96,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       final boundary = _exportKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
         if (!mounted) return;
-        messenger.showSnackBar(const SnackBar(content: Text('保存失败：画面未就绪')));
+        messenger.showSnackBar(SnackBar(content: Text(strings.saveFailedNotReady)));
         return;
       }
 
@@ -101,7 +104,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) {
         if (!mounted) return;
-        messenger.showSnackBar(const SnackBar(content: Text('保存失败：生成图片失败')));
+        messenger.showSnackBar(SnackBar(content: Text(strings.saveFailedImageGen)));
         return;
       }
 
@@ -123,7 +126,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       }
       if (!hasAccess) {
         if (!mounted) return;
-        messenger.showSnackBar(const SnackBar(content: Text('保存失败：没有相册权限')));
+        messenger.showSnackBar(SnackBar(content: Text(strings.saveFailedNoAlbumPerm)));
         return;
       }
 
@@ -134,13 +137,13 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       }
 
       if (!mounted) return;
-      messenger.showSnackBar(const SnackBar(content: Text('已保存到相册')));
+      messenger.showSnackBar(SnackBar(content: Text(strings.savedToAlbum)));
     } on GalException catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('保存失败：${e.type.message}')));
+      messenger.showSnackBar(SnackBar(content: Text(strings.saveFailed(e.type.message))));
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(SnackBar(content: Text('保存失败：$e')));
+      messenger.showSnackBar(SnackBar(content: Text(strings.saveFailed('$e'))));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -243,6 +246,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       isScrollControlled: true,
       builder: (context) {
         final scheme = Theme.of(context).colorScheme;
+        final strings = AppI18n.s(context);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -250,8 +254,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
               constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
               child: StatefulBuilder(
                 builder: (context, setModalState) {
-                Widget sourceTile(HeatmapSource s) {
-                  final selected = _source == s;
+                Widget sourceTile(HeatmapSource source) {
+                  final selected = _source == source;
                   final bg = selected ? scheme.secondaryContainer : scheme.surfaceContainerHighest;
                   final fg = selected ? scheme.onSecondaryContainer : scheme.onSurface;
                   return Material(
@@ -260,26 +264,26 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                       onTap: _loading
                           ? null
                           : () async {
-                              await _setSource(s);
+                              await _setSource(source);
                               setModalState(() {});
                             },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         child: Row(
                           children: [
-                            Icon(_sourceIcon(s), color: fg),
+                            Icon(_sourceIcon(source), color: fg),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _sourceLabel(s),
+                                    _sourceLabel(source),
                                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: fg),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _sourceSubtitle(s),
+                                    _sourceSubtitle(strings, source),
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: fg.withValues(alpha: 0.8)),
                                   ),
                                 ],
@@ -299,9 +303,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('热力图设置', style: Theme.of(context).textTheme.titleLarge),
+                      Text(strings.heatmapSettingsTitle, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 12),
-                      Text('数据来源', style: Theme.of(context).textTheme.labelLarge),
+                      Text(strings.dataSource, style: Theme.of(context).textTheme.labelLarge),
                       const SizedBox(height: 8),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
@@ -316,7 +320,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text('年份', style: Theme.of(context).textTheme.labelLarge),
+                      Text(strings.year, style: Theme.of(context).textTheme.labelLarge),
                       const SizedBox(height: 8),
                       DropdownMenu<int>(
                         initialSelection: _year,
@@ -337,14 +341,14 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _routes.isEmpty ? '暂无轨迹' : '轨迹：${_routes.length} 条',
+                              _routes.isEmpty ? strings.routesEmpty : strings.routesCount(_routes.length),
                               style: Theme.of(context).textTheme.labelLarge,
                             ),
                           ),
                           FilledButton.tonalIcon(
                             onPressed: _loading ? null : _loadFromSource,
                             icon: const Icon(Icons.refresh),
-                            label: Text('从 $sourceLabel 获取'),
+                            label: Text(strings.fetchFrom(sourceLabel)),
                           ),
                         ],
                       ),
@@ -375,8 +379,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     if (_loading) return;
     if (!await widget.services.stravaClient.isConfigured()) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = '请先绑定strava';
+        _loadError = strings.errNeedBindStrava;
         _routes = const [];
       });
       return;
@@ -413,8 +418,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       _centerToRoutes();
     } catch (e) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = e.toString();
+        _loadError = strings.errorText(e);
         _routes = const [];
       });
     } finally {
@@ -453,8 +459,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     final source = widget.services.sourceRegistry.byName('igpsport');
     if (!await source.isConfigured()) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = '请先配置 IGPSPORT 账号';
+        _loadError = strings.errNeedConfigIgpsport;
         _routes = const [];
       });
       return;
@@ -503,8 +510,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       _centerToRoutes();
     } catch (e) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = e.toString();
+        _loadError = strings.errorText(e);
         _routes = const [];
       });
     } finally {
@@ -517,8 +525,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
     final source = widget.services.sourceRegistry.byName('onelap');
     if (!await source.isConfigured()) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = '请先配置 OneLap 账号';
+        _loadError = strings.errNeedConfigOnelap;
         _routes = const [];
       });
       return;
@@ -564,8 +573,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
       _centerToRoutes();
     } catch (e) {
       if (!mounted) return;
+      final strings = AppI18n.s(context);
       setState(() {
-        _loadError = e.toString();
+        _loadError = strings.errorText(e);
         _routes = const [];
       });
     } finally {
@@ -654,30 +664,31 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppI18n.s(context);
     AMapInitializer.init(context, apiKey: _amapKeys);
     AMapInitializer.updatePrivacyAgree(_amapPrivacy);
     final scheme = Theme.of(context).colorScheme;
     final sourceLabel = _sourceLabel(_source);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('热力图'),
+        title: Text(strings.heatmapTitle),
         actions: [
           IconButton(
             onPressed: _exporting ? null : _exportHeatmap,
             icon: _exporting
                 ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.download_outlined),
-            tooltip: '保存到相册',
+            tooltip: strings.tooltipSaveToAlbum,
           ),
           IconButton(
             onPressed: _loading ? null : _loadFromSource,
             icon: const Icon(Icons.refresh),
-            tooltip: '从 $sourceLabel 获取',
+            tooltip: strings.tooltipFetchFrom(sourceLabel),
           ),
           IconButton(
             onPressed: _routes.isEmpty ? null : _centerToRoutes,
             icon: const Icon(Icons.my_location),
-            tooltip: '定位到轨迹',
+            tooltip: strings.tooltipCenterToRoutes,
           ),
           if (_loading)
             const Padding(

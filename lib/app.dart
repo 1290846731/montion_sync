@@ -1,64 +1,92 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'features/settings/settings_screen.dart';
 import 'features/sync/sync_screen.dart';
 import 'features/heatmap/heatmap_screen.dart';
+import 'i18n/app_i18n.dart';
 import 'services/app_services.dart';
 import 'services/fit_file_handler.dart';
 import 'storage/kv_store.dart';
 
-class StravaSyncApp extends StatelessWidget {
+class StravaSyncApp extends StatefulWidget {
   const StravaSyncApp({super.key, required this.services});
 
   final AppServices services;
 
   @override
+  State<StravaSyncApp> createState() => _StravaSyncAppState();
+}
+
+class _StravaSyncAppState extends State<StravaSyncApp> {
+  late final AppLanguageController _languageController = AppLanguageController(kvStore: widget.services.kvStore);
+
+  @override
+  void dispose() {
+    _languageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final seed = Colors.deepOrange;
-    return MaterialApp(
-      title: 'Strava Sync',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
-        useMaterial3: true,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
+    return AppI18n(
+      notifier: _languageController,
+      child: AnimatedBuilder(
+        animation: _languageController,
+        builder: (context, _) => MaterialApp(
+          title: _languageController.strings.appTitle,
+          locale: _languageController.locale,
+          supportedLocales: const [Locale('zh'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
+            useMaterial3: true,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            appBarTheme: const AppBarTheme(
+              centerTitle: false,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            snackBarTheme: const SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              showCloseIcon: true,
+            ),
           ),
-        ),
-        snackBarTheme: const SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          showCloseIcon: true,
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
+            useMaterial3: true,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            appBarTheme: const AppBarTheme(
+              centerTitle: false,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            snackBarTheme: const SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              showCloseIcon: true,
+            ),
+          ),
+          themeMode: ThemeMode.system,
+          home: _Home(services: widget.services),
         ),
       ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark),
-        useMaterial3: true,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: const AppBarTheme(
-          centerTitle: false,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        snackBarTheme: const SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          showCloseIcon: true,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: _Home(services: services),
     );
   }
 }
@@ -107,19 +135,20 @@ class _HomeState extends State<_Home> {
         sourceLabel: 'shared_file',
       );
       if (!mounted) return;
+      final s = AppI18n.s(context);
       final target = (widget.services.kvStore.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
-      final tip = target == 'intervals' ? '同步ICU成功' : '同步到Strava成功';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            record.status == 'success' ? tip : '外部文件上传完成：${record.status}',
+            record.status == 'success' ? s.syncSuccessTip(target) : s.uploadDone(record.status),
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
+      final s = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('外部文件上传失败：$e')),
+        SnackBar(content: Text(s.uploadFailed(s.errorText(e)))),
       );
     } finally {
       if (mounted) {
@@ -130,6 +159,7 @@ class _HomeState extends State<_Home> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppI18n.s(context);
     final screens = [
       SyncScreen(services: widget.services),
       HeatmapScreen(services: widget.services),
@@ -141,10 +171,10 @@ class _HomeState extends State<_Home> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.sync), label: '同步'),
-          NavigationDestination(icon: Icon(Icons.map), label: '热力图'),
-          NavigationDestination(icon: Icon(Icons.settings), label: '设置'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.sync), label: s.navSync),
+          NavigationDestination(icon: const Icon(Icons.map), label: s.navHeatmap),
+          NavigationDestination(icon: const Icon(Icons.settings), label: s.navSettings),
         ],
       ),
     );
