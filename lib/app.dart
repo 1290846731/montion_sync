@@ -104,6 +104,7 @@ class _HomeState extends State<_Home> {
   int _index = 0;
   bool _isUploadingShared = false;
   StreamSubscription<String>? _fitFileSub;
+  final Set<int> _builtTabs = <int>{0};
 
   @override
   void initState() {
@@ -157,20 +158,35 @@ class _HomeState extends State<_Home> {
     }
   }
 
+  Widget _tabAt(int index) {
+    if (!_builtTabs.contains(index) && index != _index) return const SizedBox.shrink();
+    _builtTabs.add(index);
+    return switch (index) {
+      0 => SyncScreen(services: widget.services),
+      1 => HeatmapScreen(services: widget.services),
+      _ => SettingsScreen(services: widget.services),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppI18n.s(context);
-    final screens = [
-      SyncScreen(services: widget.services),
-      HeatmapScreen(services: widget.services),
-      SettingsScreen(services: widget.services),
-    ];
 
     return Scaffold(
-      body: screens[_index],
+      body: IndexedStack(
+        index: _index,
+        children: [
+          _tabAt(0),
+          _tabAt(1),
+          _tabAt(2),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onDestinationSelected: (value) => setState(() {
+          _builtTabs.add(value);
+          _index = value;
+        }),
         destinations: [
           NavigationDestination(icon: const Icon(Icons.sync), label: s.navSync),
           NavigationDestination(icon: const Icon(Icons.map), label: s.navHeatmap),

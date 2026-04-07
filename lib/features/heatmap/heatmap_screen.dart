@@ -78,9 +78,12 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
   }
 
   Future<void> _setSource(HeatmapSource s) async {
-    setState(() => _source = s);
+    setState(() {
+      _source = s;
+      _routes = const [];
+      _loadError = null;
+    });
     await widget.services.kvStore.setString(Keys.heatmapSource, _sourceKey(s));
-    await _loadFromSource();
   }
 
   Future<void> _exportHeatmap() async {
@@ -220,7 +223,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
             : HeatmapSource.strava;
     if (!mounted) return;
     setState(() => _source = source);
-    await _loadFromSource();
   }
 
   Future<void> _loadFromSource() async {
@@ -328,9 +330,12 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                             ? null
                             : (value) {
                                 if (value == null) return;
-                                setState(() => _year = value);
+                                setState(() {
+                                  _year = value;
+                                  _routes = const [];
+                                  _loadError = null;
+                                });
                                 setModalState(() {});
-                                _loadFromSource();
                               },
                         dropdownMenuEntries: [
                           for (final y in years) DropdownMenuEntry<int>(value: y, label: '$y'),
@@ -649,7 +654,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
 
   Set<Polyline> _buildPolylines() {
     if (_routes.isEmpty) return const {};
-    final color = const Color(0xFFFF5A00).withValues(alpha: 0.2);
+    final color = const Color(0xFFFF5A00).withValues(alpha: 0.3);
     return _routes
         .where((pts) => pts.length >= 2)
         .map(
@@ -770,35 +775,41 @@ class _HeatmapScreenState extends State<HeatmapScreen> {
                               color: scheme.surfaceContainerHighest,
                               elevation: 1,
                               shape: const StadiumBorder(),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.tune, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '$sourceLabel · $_year',
-                                      style: Theme.of(context).textTheme.labelLarge,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: scheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(999),
+                              child: InkWell(
+                                customBorder: const StadiumBorder(),
+                                onTap: _showControlsSheet,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.tune, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '$sourceLabel · $_year',
+                                        style: Theme.of(context).textTheme.labelLarge,
                                       ),
-                                      child: Text(
-                                        _routes.isEmpty ? '0' : '${_routes.length}',
-                                        style:
-                                            Theme.of(context).textTheme.labelMedium?.copyWith(color: scheme.onPrimaryContainer),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: scheme.primaryContainer,
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          _routes.isEmpty ? '0' : '${_routes.length}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(color: scheme.onPrimaryContainer),
+                                        ),
                                       ),
-                                    ),
-                                    if (_loading) ...[
-                                      const SizedBox(width: 10),
-                                      const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                                      if (_loading) ...[
+                                        const SizedBox(width: 10),
+                                        const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
