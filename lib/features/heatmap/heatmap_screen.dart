@@ -468,9 +468,14 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                       const SizedBox(height: 12),
                       Text(strings.year, style: Theme.of(context).textTheme.labelLarge),
                       const SizedBox(height: 8),
-                      DropdownMenu<int>(
-                        initialSelection: _year,
-                        onSelected: _loading
+                      DropdownButtonFormField<int>(
+                        key: ValueKey(_year),
+                        initialValue: _year,
+                        menuMaxHeight: MediaQuery.sizeOf(context).height * 0.45,
+                        items: [
+                          for (final y in years) DropdownMenuItem<int>(value: y, child: Text('$y')),
+                        ],
+                        onChanged: _loading
                             ? null
                             : (value) {
                                 if (value == null) return;
@@ -481,9 +486,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                                 });
                                 setModalState(() {});
                               },
-                        dropdownMenuEntries: [
-                          for (final y in years) DropdownMenuEntry<int>(value: y, label: '$y'),
-                        ],
+                        decoration: const InputDecoration(),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -803,17 +806,21 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
 
   Set<Polyline> _buildPolylines(AppLanguageController controller) {
     if (_routes.isEmpty) return const {};
-    final color = Color(controller.language == AppLanguage.zh ? 0xFFFF5A00 : 0xFF00FF).withValues(alpha: 0.3);
-    return _routes
-        .where((pts) => pts.length >= 2)
-        .map(
-          (pts) => Polyline(
-            width: 5,
-            color: color,
-            points: pts.map((p) => LatLng(p[0], p[1])).toList(),
-          ),
-        )
-        .toSet();
+    final color = Color(controller.language == AppLanguage.zh ? 0xFFFF5A00 : 0xFFFF00FF).withValues(alpha: 0.3);
+    final salt = controller.language == AppLanguage.zh ? 'zh' : 'en';
+    final polylines = <Polyline>{};
+    for (var i = 0; i < _routes.length; i += 1) {
+      final pts = _routes[i];
+      if (pts.length < 2) continue;
+      final polyline = Polyline(
+        width: 5,
+        color: color,
+        points: pts.map((p) => LatLng(p[0], p[1])).toList(),
+      );
+      polyline.setIdForCopy('route_${salt}_$i');
+      polylines.add(polyline);
+    }
+    return polylines;
   }
 
   @override
