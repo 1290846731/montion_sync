@@ -105,6 +105,7 @@ class _HomeState extends State<_Home> {
   bool _isUploadingShared = false;
   StreamSubscription<String>? _fitFileSub;
   final Set<int> _builtTabs = <int>{0};
+  final ValueNotifier<int> _selectedTabIndex = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -123,6 +124,7 @@ class _HomeState extends State<_Home> {
   @override
   void dispose() {
     _fitFileSub?.cancel();
+    _selectedTabIndex.dispose();
     super.dispose();
   }
 
@@ -163,7 +165,7 @@ class _HomeState extends State<_Home> {
     _builtTabs.add(index);
     return switch (index) {
       0 => SyncScreen(services: widget.services),
-      1 => HeatmapScreen(services: widget.services),
+      1 => HeatmapScreen(services: widget.services, selectedTabIndex: _selectedTabIndex, tabIndex: 1),
       _ => SettingsScreen(services: widget.services),
     };
   }
@@ -182,10 +184,13 @@ class _HomeState extends State<_Home> {
         ],
       ),
       bottomNavigationBar: NavigationBar(
+        height: 56,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() {
           _builtTabs.add(value);
           _index = value;
+          _selectedTabIndex.value = value;
         }),
         destinations: [
           NavigationDestination(icon: const Icon(Icons.sync), label: s.navSync),

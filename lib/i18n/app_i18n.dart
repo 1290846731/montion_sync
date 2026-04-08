@@ -77,6 +77,13 @@ class AppStrings {
   String get refresh => _zh ? '刷新' : 'Refresh';
   String get close => _zh ? '关闭' : 'Close';
   String get details => _zh ? '详情' : 'Details';
+  String get openSettings => _zh ? '去系统设置' : 'Open Settings';
+  String get notNow => _zh ? '暂不' : 'Not now';
+
+  String get locationPermissionTitle => _zh ? '需要定位权限' : 'Location permission required';
+  String get locationPermissionDesc => _zh
+      ? '地图需要定位权限来获取当前位置并以此为中心显示。你可以在系统设置中打开定位权限。'
+      : 'We need location permission to get your current position and center the map. You can enable it in system settings.';
 
   String get heatmapTitle => _zh ? '热力图' : 'Heatmap';
   String get heatmapSettingsTitle => _zh ? '热力图设置' : 'Heatmap Settings';
