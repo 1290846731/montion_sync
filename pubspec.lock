@@ -381,6 +381,38 @@ packages:
       url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
     source: hosted
     version: "4.1.2"
+  in_app_purchase:
+    dependency: "direct main"
+    description:
+      name: in_app_purchase
+      sha256: "5cddd7f463f3bddb1d37a72b95066e840d5822d66291331d7f8f05ce32c24b6c"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "3.2.3"
+  in_app_purchase_android:
+    dependency: transitive
+    description:
+      name: in_app_purchase_android
+      sha256: "634bee4734b17fe55f370f0ac07a22431a9666e0f3a870c6d20350856e8bbf71"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "0.4.0+10"
+  in_app_purchase_platform_interface:
+    dependency: transitive
+    description:
+      name: in_app_purchase_platform_interface
+      sha256: "1d353d38251da5b9fea6635c0ebfc6bb17a2d28d0e86ea5e083bf64244f1fb4c"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "1.4.0"
+  in_app_purchase_storekit:
+    dependency: transitive
+    description:
+      name: in_app_purchase_storekit
+      sha256: "1d512809edd9f12ff88fce4596a13a18134e2499013f4d6a8894b04699363c93"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "0.4.8+1"
   intl:
     dependency: transitive
     description:
@@ -389,6 +421,14 @@ packages:
       url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
     source: hosted
     version: "0.20.2"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      sha256: cb09e7dac6210041fad964ed7fbee004f14258b4eca4040f72d1234062ace4c8
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "4.11.0"
   latlong2:
     dependency: "direct main"
     description:
@@ -493,6 +533,62 @@ packages:
       url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
     source: hosted
     version: "2.0.0"
+  mmkv:
+    dependency: "direct main"
+    description:
+      name: mmkv
+      sha256: "42fb1a6be1b00051612b4060e343eb28ade355ef6b845b07351696b2c6d2b256"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_android:
+    dependency: transitive
+    description:
+      name: mmkv_android
+      sha256: "1cf400ea4527306fcbe9db962441d8fe347cfad1dfd8034b4f465c5d501dc40d"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_ios:
+    dependency: transitive
+    description:
+      name: mmkv_ios
+      sha256: ee97fd5c1d7941fc4a5a60f68c08b505d9257a22b10081a90aa3325fd782da18
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_linux:
+    dependency: transitive
+    description:
+      name: mmkv_linux
+      sha256: a8f66b18c673d56c62abf7e7097d2d5b760f8e10afc5ff01f02f4e91683b3dcf
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_ohos:
+    dependency: transitive
+    description:
+      name: mmkv_ohos
+      sha256: "3477f5f9233ed6e5929e75bee9273f7835de576d637fedd6a72572bb230b72b5"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_platform_interface:
+    dependency: transitive
+    description:
+      name: mmkv_platform_interface
+      sha256: bef7422b14f84297fe637adc82b9fe018155a429fcbaef53efb06ecf005b0288
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
+  mmkv_win32:
+    dependency: transitive
+    description:
+      name: mmkv_win32
+      sha256: "34b8b8a4596a23bc375f4ea811fc7d81674a15a4961d58dd9b126b50168d41a8"
+      url: "https://repo.wemomo.com/artifactory/api/pub/pub/"
+    source: hosted
+    version: "2.4.0"
   native_toolchain_c:
     dependency: transitive
     description:

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'dart:math';
@@ -15,9 +16,11 @@ import 'package:xml/xml.dart';
 import 'package:x_amap_base/x_amap_base.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../core/payment/iap_service.dart';
 import '../../services/app_services.dart';
 import '../../sources/igpsport_source.dart';
 import '../../storage/kv_store.dart';
+import '../../utils/storage_utils.dart';
 
 enum HeatmapSource { strava, igpsport, onelap }
 
@@ -68,6 +71,9 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
     hasShow: true,
     hasAgree: true,
   );
+  static const String _subscriptionProductId = 'com.mj.stravasync.p2';
+  final IapService _iapService = IapService();
+  bool _purchasing = false;
 
   String _sourceLabel(HeatmapSource s) {
     return switch (s) {
@@ -370,6 +376,12 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
   }
 
   Future<void> _loadFromSource() async {
+    final ok = await _ensurePurchasedForSync();
+    if (!ok) return;
+    return _loadFromSourceInternal();
+  }
+
+  Future<void> _loadFromSourceInternal() async {
     if (_source == HeatmapSource.igpsport) {
       return _loadFromIgpsport();
     }
@@ -377,6 +389,66 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
       return _loadFromOnelap();
     }
     return _loadFromStrava();
+  }
+
+  Future<bool> _ensurePurchasedForSync() async {
+    if (StorageUtils.isSubscription()) return true;
+    if (_purchasing) return false;
+    if (!mounted) return false;
+
+    _purchasing = true;
+    StreamSubscription<BuyState>? buySub;
+    StreamSubscription<SubscriptionState>? subStateSub;
+    final completer = Completer<bool>();
+
+    try {
+      final strings = AppI18n.s(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(strings.language == AppLanguage.zh ? '需要购买后才能同步，正在发起支付…' : 'Purchase required. Starting payment…'),
+        ),
+      );
+
+      _iapService.init(subscriptionProductIds: const [_subscriptionProductId]);
+
+      buySub = _iapService.purchaseStream.listen((state) {
+        if (state.productId != _subscriptionProductId) return;
+        if (state is BuyErrorState) {
+          if (!completer.isCompleted) completer.complete(false);
+        }
+      });
+
+      subStateSub = _iapService.subscriptionStream.listen((state) {
+        if (state is SubscriptionActiveState) {
+          if (!completer.isCompleted) completer.complete(true);
+        }
+      });
+
+      await _iapService.buyConsumable(_subscriptionProductId);
+
+      final ok = await completer.future.timeout(
+        const Duration(minutes: 2),
+        onTimeout: () => false,
+      );
+
+      if (!mounted) return ok;
+      if (ok) {
+        StorageUtils.saveSubscriptionStatus('ACTIVE');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.language == AppLanguage.zh ? '购买成功' : 'Purchase successful')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(strings.language == AppLanguage.zh ? '未完成购买，已取消同步' : 'Purchase not completed. Sync canceled.')),
+        );
+      }
+
+      return ok;
+    } finally {
+      _purchasing = false;
+      await buySub?.cancel();
+      await subStateSub?.cancel();
+    }
   }
 
   Future<void> _showControlsSheet() async {
