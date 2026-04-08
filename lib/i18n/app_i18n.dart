@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'dart:ui';
 
 import '../storage/kv_store.dart';
 
@@ -26,8 +27,17 @@ class AppLanguageController extends ChangeNotifier {
   }
 
   static AppLanguage _read(KvStore kvStore) {
-    final raw = (kvStore.getString(Keys.appLanguage) ?? 'zh').toLowerCase();
-    return raw.startsWith('en') ? AppLanguage.en : AppLanguage.zh;
+    final saved = kvStore.getString(Keys.appLanguage);
+    final raw = saved?.trim().toLowerCase();
+    if (raw != null && raw.isNotEmpty) {
+      if (raw.startsWith('en')) return AppLanguage.en;
+      if (raw.startsWith('zh')) return AppLanguage.zh;
+    }
+
+    final locales = PlatformDispatcher.instance.locales;
+    final primary = locales.isNotEmpty ? locales.first : null;
+    final isChinese = primary?.languageCode.toLowerCase() == 'zh';
+    return isChinese ? AppLanguage.zh : AppLanguage.en;
   }
 }
 
