@@ -11,7 +11,7 @@
         android:requestLegacyExternalStorage="true">
         <meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="YOUR_AMAP_ANDROID_KEY"/>
+            android:value="fa1e0dca85328840c53cc33522854cf3"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
