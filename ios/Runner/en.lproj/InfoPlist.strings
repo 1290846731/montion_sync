@@ -1,0 +1,4 @@
+"NSPhotoLibraryAddUsageDescription" = "We need permission to save the heatmap to your photo library.";
+"NSPhotoLibraryUsageDescription" = "We need access to your photo library to save the heatmap.";
+"NSLocationWhenInUseUsageDescription" = "We need location access to get your current position and center the map.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "We need location access to get your current position and center the map.";

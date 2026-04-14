@@ -1,0 +1,4 @@
+"NSPhotoLibraryAddUsageDescription" = "需要保存热力图到相册。";
+"NSPhotoLibraryUsageDescription" = "需要访问相册以保存热力图。";
+"NSLocationWhenInUseUsageDescription" = "需要定位权限用于获取当前位置并以此为中心显示地图。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "需要定位权限用于获取当前位置并以此为中心显示地图。";
