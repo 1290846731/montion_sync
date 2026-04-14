@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/app_services.dart';
 import '../../storage/kv_store.dart';
+import 'strava_auth_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.services});
@@ -51,16 +51,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _load() async {
     final kv = widget.services.kvStore;
 
-    _igpsportUsername.text = (await kv.getSecureString(Keys.igpsportUsername)) ?? '';
-    _igpsportPassword.text = (await kv.getSecureString(Keys.igpsportPassword)) ?? '';
-    _igpsportAccessToken.text = (await kv.getSecureString(Keys.igpsportAccessToken)) ?? '';
+    _igpsportUsername.text =
+        (await kv.getSecureString(Keys.igpsportUsername)) ?? '';
+    _igpsportPassword.text =
+        (await kv.getSecureString(Keys.igpsportPassword)) ?? '';
+    _igpsportAccessToken.text =
+        (await kv.getSecureString(Keys.igpsportAccessToken)) ?? '';
 
-    _onelapUsername.text = (await kv.getSecureString(Keys.onelapUsername)) ?? '';
-    _onelapPassword.text = (await kv.getSecureString(Keys.onelapPassword)) ?? '';
+    _onelapUsername.text =
+        (await kv.getSecureString(Keys.onelapUsername)) ?? '';
+    _onelapPassword.text =
+        (await kv.getSecureString(Keys.onelapPassword)) ?? '';
     _onelapCookie.text = (await kv.getSecureString(Keys.onelapCookie)) ?? '';
 
-    _intervalsApiKey.text = (await kv.getSecureString(Keys.intervalsApiKey)) ?? '';
-    final syncTarget = (kv.getString(Keys.syncTarget) ?? 'strava').toLowerCase();
+    _intervalsApiKey.text =
+        (await kv.getSecureString(Keys.intervalsApiKey)) ?? '';
+    final syncTarget = (kv.getString(Keys.syncTarget) ?? 'strava')
+        .toLowerCase();
 
     final stravaConfigured = await widget.services.stravaClient.isConfigured();
 
@@ -74,12 +81,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _saveIgpsport() async {
     final kv = widget.services.kvStore;
-    await kv.setSecureString(Keys.igpsportUsername, _igpsportUsername.text.trim());
+    await kv.setSecureString(
+      Keys.igpsportUsername,
+      _igpsportUsername.text.trim(),
+    );
     await kv.setSecureString(Keys.igpsportPassword, _igpsportPassword.text);
-    await kv.setSecureString(Keys.igpsportAccessToken, _igpsportAccessToken.text.trim());
+    await kv.setSecureString(
+      Keys.igpsportAccessToken,
+      _igpsportAccessToken.text.trim(),
+    );
     if (!mounted) return;
     final s = AppI18n.s(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.igpsportSaved)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(s.igpsportSaved)));
   }
 
   Future<void> _saveOneLap() async {
@@ -89,29 +104,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await kv.setSecureString(Keys.onelapCookie, _onelapCookie.text.trim());
     if (!mounted) return;
     final s = AppI18n.s(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.onelapSaved)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(s.onelapSaved)));
+  }
+
+  Future<void> _disconnectStrava() async {
+    final kv = widget.services.kvStore;
+    await kv.setSecureString(Keys.stravaAccessToken, '');
+    await kv.setSecureString(Keys.stravaRefreshToken, '');
+    await kv.setSecureString(Keys.stravaExpiresAt, '');
+    final stravaConfigured = await widget.services.stravaClient.isConfigured();
+    if (!mounted) return;
+    setState(() {
+      _stravaConfigured = stravaConfigured;
+    });
   }
 
   Future<void> _connectStrava() async {
-    final url = await widget.services.stravaClient.buildAuthorizeUrl(forcePrompt: true);
-    final result = await FlutterWebAuth2.authenticate(
-      url: url,
-      callbackUrlScheme: 'stravasync',
+    final url = await widget.services.stravaClient.buildAuthorizeUrl(
+      forcePrompt: true,
     );
+
     if (!mounted) return;
-    final code = Uri.parse(result).queryParameters['code'];
+    final code = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (context) => StravaAuthScreen(authUrl: url)),
+    );
+
     if (code == null || code.isEmpty) {
+      if (!mounted) return;
       throw StateError(AppI18n.s(context).errNoAuthCode);
     }
+
     await widget.services.stravaClient.exchangeCode(code);
     final stravaConfigured = await widget.services.stravaClient.isConfigured();
-    
+
     if (!mounted) return;
     setState(() {
       _stravaConfigured = stravaConfigured;
     });
     final s = AppI18n.s(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.stravaAuthDone)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(s.stravaAuthDone)));
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -122,7 +157,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (!mounted) return;
       final s = AppI18n.s(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.errorText(e))));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.errorText(e))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -130,10 +167,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _saveIntervals() async {
     final kv = widget.services.kvStore;
-    await kv.setSecureString(Keys.intervalsApiKey, _intervalsApiKey.text.trim());
+    await kv.setSecureString(
+      Keys.intervalsApiKey,
+      _intervalsApiKey.text.trim(),
+    );
     if (!mounted) return;
     final s = AppI18n.s(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.intervalsSaved)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(s.intervalsSaved)));
   }
 
   Future<void> _saveSyncTarget(String value) async {
@@ -176,7 +218,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(s.settingsAccountsAndSync, style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  s.settingsAccountsAndSync,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 12),
                 Card(
                   color: scheme.surfaceContainerHighest,
@@ -186,8 +231,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     trailing: DropdownButton<AppLanguage>(
                       value: controller.language,
                       items: [
-                        DropdownMenuItem(value: AppLanguage.zh, child: Text(s.languageZh)),
-                        DropdownMenuItem(value: AppLanguage.en, child: Text(s.languageEn)),
+                        DropdownMenuItem(
+                          value: AppLanguage.zh,
+                          child: Text(s.languageZh),
+                        ),
+                        DropdownMenuItem(
+                          value: AppLanguage.en,
+                          child: Text(s.languageEn),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value == null) return;
@@ -236,9 +287,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Text(s.stravaHint(_stravaConfigured)),
                       const SizedBox(height: 12),
-                      FilledButton.tonal(
-                        onPressed: _busy ? null : () => _run(_connectStrava),
-                        child: Text(_stravaConfigured ? s.stravaAuthActionReconnect : s.stravaAuthActionConnect),
+                      Row(
+                        children: [
+                          if (_stravaConfigured) ...[
+                            FilledButton.tonal(
+                              onPressed: _busy
+                                  ? null
+                                  : () => _run(_disconnectStrava),
+                              child: const Text('解绑 (Disconnect)'),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          FilledButton.tonal(
+                            onPressed: _busy
+                                ? null
+                                : () => _run(_connectStrava),
+                            child: Text(
+                              _stravaConfigured
+                                  ? s.stravaAuthActionReconnect
+                                  : s.stravaAuthActionConnect,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -253,7 +323,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       TextField(
                         controller: _intervalsApiKey,
-                        decoration: InputDecoration(labelText: s.intervalsApiKey),
+                        decoration: InputDecoration(
+                          labelText: s.intervalsApiKey,
+                        ),
                         obscureText: true,
                         enabled: !_busy,
                       ),
@@ -266,7 +338,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(s.settingsThirdParty, style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  s.settingsThirdParty,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: 12),
                 Card(
                   color: scheme.surfaceContainerHighest,
@@ -290,7 +365,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: _igpsportAccessToken,
-                        decoration: InputDecoration(labelText: s.accessTokenOptional),
+                        decoration: InputDecoration(
+                          labelText: s.accessTokenOptional,
+                        ),
                         enabled: !_busy,
                       ),
                       const SizedBox(height: 12),
@@ -311,7 +388,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       TextField(
                         controller: _onelapCookie,
-                        decoration: InputDecoration(labelText: s.cookieRecommended),
+                        decoration: InputDecoration(
+                          labelText: s.cookieRecommended,
+                        ),
                         minLines: 2,
                         maxLines: 4,
                         enabled: !_busy,
@@ -321,13 +400,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: _onelapUsername,
-                        decoration: InputDecoration(labelText: s.usernameOptional),
+                        decoration: InputDecoration(
+                          labelText: s.usernameOptional,
+                        ),
                         enabled: !_busy,
                       ),
                       const SizedBox(height: 8),
                       TextField(
                         controller: _onelapPassword,
-                        decoration: InputDecoration(labelText: s.passwordOptional),
+                        decoration: InputDecoration(
+                          labelText: s.passwordOptional,
+                        ),
                         obscureText: true,
                         enabled: !_busy,
                       ),

@@ -139,8 +139,7 @@ class OneLapSource implements SourceAdapter {
     }
 
     final results = <Activity>[];
-    final reversed = items.reversed.toList(growable: false);
-    for (final item in reversed) {
+    for (final item in items) {
       if (item is! Map) continue;
       final sourceId = (item['fileKey'] ?? item['created_at'] ?? item['id'])?.toString();
       if (sourceId == null || sourceId.isEmpty) continue;
@@ -158,7 +157,14 @@ class OneLapSource implements SourceAdapter {
       if (since != null && activity.startTime != null && activity.startTime!.isBefore(since.toUtc())) continue;
       if (until != null && activity.startTime != null && activity.startTime!.isAfter(until.toUtc())) continue;
       results.add(activity);
-      if (limit != null && results.length >= limit) break;
+    }
+    results.sort((a, b) {
+      final at = a.startTime?.toUtc().millisecondsSinceEpoch ?? -1;
+      final bt = b.startTime?.toUtc().millisecondsSinceEpoch ?? -1;
+      return bt.compareTo(at);
+    });
+    if (limit != null && results.length > limit) {
+      return results.sublist(0, limit);
     }
     return results;
   }
