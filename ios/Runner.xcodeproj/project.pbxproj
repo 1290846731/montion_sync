@@ -204,6 +204,8 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+				8D1D2F7E2F1C4A2B00AABBCC /* Ensure Framework MinimumOSVersion */,
+				8D1D2F6D2F1C4A2B00AABBCC /* Generate dSYM (objective_c) */,
 				C1F9792D8EA68BD73CDBF423 /* [CP] Embed Pods Frameworks */,
 				EEEBB7D58F1F70A250C01E60 /* [CP] Copy Pods Resources */,
 			);
@@ -331,6 +333,36 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		8D1D2F6D2F1C4A2B00AABBCC /* Generate dSYM (objective_c) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate dSYM (objective_c)";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\nif [ \"${ACTION}\" != \"install\" ] && [ \"${ACTION}\" != \"archive\" ]; then\n  exit 0\nfi\n\nBIN=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework/objective_c\"\nOUT=\"${DWARF_DSYM_FOLDER_PATH}/objective_c.framework.dSYM\"\n\nif [ ! -f \"${BIN}\" ]; then\n  exit 0\nfi\n\nrm -rf \"${OUT}\"\nxcrun dsymutil \"${BIN}\" -o \"${OUT}\" || true\n";
+		};
+		8D1D2F7E2F1C4A2B00AABBCC /* Ensure Framework MinimumOSVersion */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Ensure Framework MinimumOSVersion";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n\nif [ \"${ACTION}\" != \"install\" ] && [ \"${ACTION}\" != \"archive\" ]; then\n  exit 0\nfi\n\nMIN=\"${IPHONEOS_DEPLOYMENT_TARGET}\"\nPLISTBUDDY=\"/usr/libexec/PlistBuddy\"\n\nfix_plist() {\n  local plist=\"$1\"\n  if [ ! -f \"${plist}\" ]; then\n    return 0\n  fi\n  if \"${PLISTBUDDY}\" -c \"Print :MinimumOSVersion\" \"${plist}\" >/dev/null 2>&1; then\n    \"${PLISTBUDDY}\" -c \"Set :MinimumOSVersion ${MIN}\" \"${plist}\" >/dev/null\n  else\n    \"${PLISTBUDDY}\" -c \"Add :MinimumOSVersion string ${MIN}\" \"${plist}\" >/dev/null\n  fi\n}\n\nfix_plist \"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/App.framework/Info.plist\"\nfix_plist \"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/objective_c.framework/Info.plist\"\n";
 		};
 		C1F9792D8EA68BD73CDBF423 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
