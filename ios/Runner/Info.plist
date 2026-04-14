@@ -8,7 +8,7 @@
 			<key>CFBundleTypeName</key>
 			<string>FIT File</string>
 			<key>LSHandlerRank</key>
-			<string>Owner</string>
+			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>public.data</string>
