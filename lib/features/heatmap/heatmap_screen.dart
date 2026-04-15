@@ -6,12 +6,14 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/gestures.dart';
 import 'package:amap_map/amap_map.dart';
 import 'package:fit_sdk/fit_sdk.dart' as fit;
 import 'package:gal/gal.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:xml/xml.dart';
 import 'package:x_amap_base/x_amap_base.dart';
 
@@ -396,6 +398,10 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
     if (_purchasing) return false;
     if (!mounted) return false;
 
+    final allowed = await _showPurchaseGateDialog();
+    if (!allowed) return false;
+    if (!mounted) return false;
+
     _purchasing = true;
     StreamSubscription<BuyState>? buySub;
     StreamSubscription<SubscriptionState>? subStateSub;
@@ -405,7 +411,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
       final strings = AppI18n.s(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(strings.language == AppLanguage.zh ? '需要购买后才能同步，正在发起支付…' : 'Purchase required. Starting payment…'),
+          content: Text(strings.language == AppLanguage.zh ? '需要购买后才能绘制热力图，正在发起支付…' : 'Purchase required. Starting payment…'),
         ),
       );
 
@@ -449,6 +455,157 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
       await buySub?.cancel();
       await subStateSub?.cancel();
     }
+  }
+
+  Future<bool> _showPurchaseGateDialog() async {
+    final s = AppI18n.s(context);
+    var agreed = false;
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        return SafeArea(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              final titleStyle = Theme.of(context).textTheme.titleLarge;
+              final bodyStyle = Theme.of(context).textTheme.bodyMedium;
+
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  16 + MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: scheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.lock_open,
+                            color: scheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(s.paywallTitle, style: titleStyle)),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          icon: const Icon(Icons.close),
+                          tooltip: s.close,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      s.paywallDesc,
+                      style: bodyStyle?.copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.85),
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Checkbox(
+                            value: agreed,
+                            onChanged: (v) => setState(() => agreed = v ?? false),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => setState(() => agreed = !agreed),
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurface.withValues(alpha: 0.85),
+                                  height: 1.35,
+                                ),
+                                children: [
+                                  TextSpan(text: '${s.agreePrefix} '),
+                                  TextSpan(
+                                    text: s.termsOfUseEula,
+                                    style: TextStyle(
+                                      color: scheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => AgreementWebViewScreen(
+                                              title: s.termsOfUseEula,
+                                              url: 'https://innoai.online/sport_terms_conditions.html',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  TextSpan(text: ' ${s.andText} '),
+                                  TextSpan(
+                                    text: s.privacyPolicy,
+                                    style: TextStyle(
+                                      color: scheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => AgreementWebViewScreen(
+                                              title: s.privacyPolicy,
+                                              url: 'https://innoai.online/sport_privacy_policy.html',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: agreed ? () => Navigator.of(context).pop(true) : null,
+                      child: Text(s.continueText),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(s.cancel),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   Future<void> _showControlsSheet() async {
@@ -1057,6 +1214,59 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                 ),
               ],
             ),
+    );
+  }
+}
+
+class AgreementWebViewScreen extends StatefulWidget {
+  const AgreementWebViewScreen({
+    super.key,
+    required this.title,
+    required this.url,
+  });
+
+  final String title;
+  final String url;
+
+  @override
+  State<AgreementWebViewScreen> createState() => _AgreementWebViewScreenState();
+}
+
+class _AgreementWebViewScreenState extends State<AgreementWebViewScreen> {
+  late final WebViewController _controller;
+  var _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) setState(() => _loading = true);
+          },
+          onPageFinished: (_) {
+            if (mounted) setState(() => _loading = false);
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.url));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        bottom: _loading
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
+      ),
+      body: WebViewWidget(controller: _controller),
     );
   }
 }

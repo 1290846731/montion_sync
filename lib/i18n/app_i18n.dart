@@ -79,6 +79,15 @@ class AppStrings {
   String get details => _zh ? '详情' : 'Details';
   String get openSettings => _zh ? '去系统设置' : 'Open Settings';
   String get notNow => _zh ? '暂不' : 'Not now';
+  String get cancel => _zh ? '取消' : 'Cancel';
+  String get continueText => _zh ? '继续' : 'Continue';
+
+  String get paywallTitle => _zh ? '解锁热力图' : 'Unlock Heatmap';
+  String get paywallDesc => _zh ? '热力图绘制为付费功能，购买后可终生使用。' : 'Heatmap rendering is a paid feature. One-time purchase, lifetime access.';
+  String get privacyPolicy => _zh ? '隐私政策' : 'Privacy Policy';
+  String get termsOfUseEula => _zh ? '用户协议' : 'Terms of Use';
+  String get agreePrefix => _zh ? '我已阅读并同意' : 'I have read and agree to';
+  String get andText => _zh ? '和' : 'and';
 
   String get locationPermissionTitle => _zh ? '需要定位权限' : 'Location permission required';
   String get locationPermissionDesc => _zh
