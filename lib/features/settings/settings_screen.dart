@@ -377,7 +377,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: scheme.surfaceContainerHighest,
                   child: ExpansionTile(
                     leading: const Icon(Icons.insights),
-                    title: Text(s.intervalsTitle),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text(s.intervalsTitle)),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const IcuApiHelpScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.help_outline),
+                        ),
+                      ],
+                    ),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: [
                       TextField(
@@ -511,6 +525,30 @@ class StravaApiHelpScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Image.asset('assets/images/strava_api_help.png'),
+        ],
+      ),
+    );
+  }
+}
+
+class IcuApiHelpScreen extends StatelessWidget {
+  const IcuApiHelpScreen({super.key});
+
+  static const String _text = '`https://intervals.icu/settings`';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Intervals.icu')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const SelectableText(
+            _text,
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          Image.asset('assets/images/icu_api_help.png'),
         ],
       ),
     );
