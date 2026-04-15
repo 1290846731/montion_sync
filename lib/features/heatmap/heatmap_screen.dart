@@ -376,8 +376,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
   }
 
   Future<void> _loadFromSource() async {
-    // final ok = await _ensurePurchasedForSync();
-    // if (!ok) return;
+    final ok = await _ensurePurchasedForSync();
+    if (!ok) return;
     return _loadFromSourceInternal();
   }
 
