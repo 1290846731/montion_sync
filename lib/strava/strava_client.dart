@@ -18,22 +18,42 @@ class StravaClient {
 
   static const redirectUri = 'stravasync://localhost/oauth';
 
-  static const _clientId = '216639';
-  static const _clientSecret = '7ec5fd013eeaff4bc2899dc48ee2b845d01b56ef';
+  Future<String> _requireClientId() async {
+    final raw = await _kvStore.getSecureString(Keys.stravaClientId);
+    final v = raw?.trim() ?? '';
+    if (v.isEmpty) {
+      throw StateError('Strava Client ID 未配置');
+    }
+    return v;
+  }
+
+  Future<String> _requireClientSecret() async {
+    final raw = await _kvStore.getSecureString(Keys.stravaClientSecret);
+    final v = raw?.trim() ?? '';
+    if (v.isEmpty) {
+      throw StateError('Strava Client Secret 未配置');
+    }
+    return v;
+  }
 
   Future<bool> isConfigured() async {
-    // 既然已经内置了，所以总是认为已经配置（或者我们可以检查是否获取了 Access Token）
+    final clientId = await _kvStore.getSecureString(Keys.stravaClientId);
+    final clientSecret = await _kvStore.getSecureString(Keys.stravaClientSecret);
     final token = await _kvStore.getSecureString(Keys.stravaAccessToken);
-    return token != null && token.isNotEmpty;
+    return (clientId ?? '').trim().isNotEmpty &&
+        (clientSecret ?? '').trim().isNotEmpty &&
+        (token ?? '').trim().isNotEmpty;
   }
 
   Future<String> buildAuthorizeUrl({bool forcePrompt = false}) async {
+    final clientId = await _requireClientId();
+    await _requireClientSecret();
     final prompt = forcePrompt ? 'force' : 'auto';
     final uri = Uri.https(
       'www.strava.com',
       '/oauth/authorize',
       {
-        'client_id': _clientId,
+        'client_id': clientId,
         'redirect_uri': redirectUri,
         'response_type': 'code',
         'approval_prompt': prompt,
@@ -44,11 +64,13 @@ class StravaClient {
   }
 
   Future<void> exchangeCode(String code) async {
+    final clientId = await _requireClientId();
+    final clientSecret = await _requireClientSecret();
     final response = await _dio.post<Map<String, dynamic>>(
       'https://www.strava.com/oauth/token',
       data: FormData.fromMap({
-        'client_id': _clientId,
-        'client_secret': _clientSecret,
+        'client_id': clientId,
+        'client_secret': clientSecret,
         'code': code,
         'grant_type': 'authorization_code',
       }),
@@ -548,6 +570,8 @@ class StravaClient {
   }
 
   Future<String> _refreshAccessToken() async {
+    final clientId = await _requireClientId();
+    final clientSecret = await _requireClientSecret();
     final refreshToken = await _kvStore.getSecureString(Keys.stravaRefreshToken);
     if (refreshToken == null || refreshToken.isEmpty) {
       throw StateError('没有可用的 Refresh Token');
@@ -556,8 +580,8 @@ class StravaClient {
     final response = await _dio.post<Map<String, dynamic>>(
       'https://www.strava.com/oauth/token',
       data: FormData.fromMap({
-        'client_id': _clientId,
-        'client_secret': _clientSecret,
+        'client_id': clientId,
+        'client_secret': clientSecret,
         'grant_type': 'refresh_token',
         'refresh_token': refreshToken,
       }),

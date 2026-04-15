@@ -24,6 +24,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _onelapCookie = TextEditingController();
 
   final _intervalsApiKey = TextEditingController();
+  final _stravaClientId = TextEditingController();
+  final _stravaClientSecret = TextEditingController();
 
   bool _loading = true;
   bool _busy = false;
@@ -45,6 +47,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _onelapPassword.dispose();
     _onelapCookie.dispose();
     _intervalsApiKey.dispose();
+    _stravaClientId.dispose();
+    _stravaClientSecret.dispose();
     super.dispose();
   }
 
@@ -66,6 +70,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     _intervalsApiKey.text =
         (await kv.getSecureString(Keys.intervalsApiKey)) ?? '';
+
+    _stravaClientId.text =
+        (await kv.getSecureString(Keys.stravaClientId)) ?? '';
+    _stravaClientSecret.text =
+        (await kv.getSecureString(Keys.stravaClientSecret)) ?? '';
     final syncTarget = (kv.getString(Keys.syncTarget) ?? 'strava')
         .toLowerCase();
 
@@ -119,6 +128,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _stravaConfigured = stravaConfigured;
     });
+  }
+
+  Future<void> _saveStravaClient() async {
+    final kv = widget.services.kvStore;
+    await kv.setSecureString(Keys.stravaClientId, _stravaClientId.text.trim());
+    await kv.setSecureString(
+      Keys.stravaClientSecret,
+      _stravaClientSecret.text.trim(),
+    );
+    final stravaConfigured = await widget.services.stravaClient.isConfigured();
+    if (!mounted) return;
+    setState(() => _stravaConfigured = stravaConfigured);
+    final s = AppI18n.s(context);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(s.stravaClientSaved)));
   }
 
   Future<void> _connectStrava() async {
@@ -286,6 +310,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: [
                       Text(s.stravaHint(_stravaConfigured)),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _stravaClientId,
+                        decoration: InputDecoration(labelText: s.stravaClientId),
+                        enabled: !_busy,
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _stravaClientSecret,
+                        decoration:
+                            InputDecoration(labelText: s.stravaClientSecret),
+                        obscureText: true,
+                        enabled: !_busy,
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        onPressed: _busy ? null : () => _run(_saveStravaClient),
+                        child: Text(s.save),
+                      ),
                       const SizedBox(height: 12),
                       Row(
                         children: [

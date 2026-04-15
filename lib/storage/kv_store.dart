@@ -42,8 +42,8 @@ abstract class Keys {
   static const intervalsApiKey = 'intervals.api_key';
   static const syncTarget = 'sync.target';
 
-  // static const stravaClientId = 'strava.client_id';
-  // static const stravaClientSecret = 'strava.client_secret';
+  static const stravaClientId = 'strava.client_id';
+  static const stravaClientSecret = 'strava.client_secret';
   static const stravaAccessToken = 'strava.access_token';
   static const stravaRefreshToken = 'strava.refresh_token';
   static const stravaExpiresAt = 'strava.expires_at';

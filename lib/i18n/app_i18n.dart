@@ -123,6 +123,9 @@ class AppStrings {
   String get stravaAuthActionConnect => _zh ? '去授权' : 'Connect';
   String get stravaAuthDone => _zh ? 'Strava 授权完成' : 'Strava authorization completed';
   String get errNoAuthCode => _zh ? '未获取到 code' : 'Missing authorization code';
+  String get stravaClientId => _zh ? 'Client ID' : 'Client ID';
+  String get stravaClientSecret => _zh ? 'Client Secret' : 'Client Secret';
+  String get stravaClientSaved => _zh ? '已保存 Strava Client 配置' : 'Saved Strava client settings';
 
   String get intervalsTitle => 'Intervals.icu';
   String get intervalsApiKey => 'API_KEY';
