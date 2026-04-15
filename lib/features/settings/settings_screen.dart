@@ -306,7 +306,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: scheme.surfaceContainerHighest,
                   child: ExpansionTile(
                     leading: const Icon(Icons.directions_run),
-                    title: Text(s.stravaTitle(_stravaConfigured)),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(s.stravaTitle(_stravaConfigured)),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const StravaApiHelpScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.help_outline),
+                        ),
+                      ],
+                    ),
                     childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: [
                       Text(s.stravaHint(_stravaConfigured)),
@@ -473,6 +489,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 24),
               ],
             ),
+    );
+  }
+}
+
+class StravaApiHelpScreen extends StatelessWidget {
+  const StravaApiHelpScreen({super.key});
+
+  static const String _text = '`https://www.strava.com/settings/api`';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Strava API')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const SelectableText(
+            _text,
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          Image.asset('assets/images/strava_api_help.png'),
+        ],
+      ),
     );
   }
 }
