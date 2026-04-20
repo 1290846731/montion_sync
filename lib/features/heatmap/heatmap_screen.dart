@@ -517,7 +517,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                     ),
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: scheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
@@ -529,8 +528,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                             value: agreed,
                             onChanged: (v) => setState(() => agreed = v ?? false),
                           ),
-                          const SizedBox(width: 4),
-                          GestureDetector(
+                          Expanded(child: GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () => setState(() => agreed = !agreed),
                             child: RichText(
@@ -582,7 +580,8 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                                 ],
                               ),
                             ),
-                          ),
+                          ),),
+
                         ],
                       ),
                     ),

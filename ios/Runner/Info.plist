@@ -55,6 +55,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+	</array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>需要保存热力图到相册。</string>
 	<key>NSPhotoLibraryUsageDescription</key>

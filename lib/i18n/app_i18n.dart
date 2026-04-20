@@ -66,7 +66,7 @@ class AppStrings {
   String get appTitle => _zh ? 'Strava 同步' : 'Strava Sync';
 
   String get navSync => _zh ? '同步' : 'Sync';
-  String get navHeatmap => _zh ? '热力图' : 'Heatmap';
+  String get navHeatmap => _zh ? '热力图' : 'Exercise Heat Map';
   String get navSettings => _zh ? '设置' : 'Settings';
 
   String get languageTitle => _zh ? '语言' : 'Language';
@@ -82,8 +82,8 @@ class AppStrings {
   String get cancel => _zh ? '取消' : 'Cancel';
   String get continueText => _zh ? '继续' : 'Continue';
 
-  String get paywallTitle => _zh ? '解锁热力图' : 'Unlock Heatmap';
-  String get paywallDesc => _zh ? '热力图绘制为付费功能，购买后可终生使用。' : 'Heatmap rendering is a paid feature. One-time purchase, lifetime access.';
+  String get paywallTitle => _zh ? '解锁热力图' : 'Unlock Exercise Heat Map';
+  String get paywallDesc => _zh ? '热力图绘制为付费功能，购买后可终生使用。' : 'Exercise Heat Map rendering is a paid feature. One-time purchase, lifetime access.';
   String get privacyPolicy => _zh ? '隐私政策' : 'Privacy Policy';
   String get termsOfUseEula => _zh ? '用户协议' : 'Terms of Use';
   String get agreePrefix => _zh ? '我已阅读并同意' : 'I have read and agree to';
@@ -94,8 +94,8 @@ class AppStrings {
       ? '地图需要定位权限来获取当前位置并以此为中心显示。你可以在系统设置中打开定位权限。'
       : 'We need location permission to get your current position and center the map. You can enable it in system settings.';
 
-  String get heatmapTitle => _zh ? '热力图' : 'Heatmap';
-  String get heatmapSettingsTitle => _zh ? '热力图设置' : 'Heatmap Settings';
+  String get heatmapTitle => _zh ? '热力图' : 'Exercise Heat Map';
+  String get heatmapSettingsTitle => _zh ? '热力图设置' : 'Exercise Heat Map Settings';
   String get dataSource => _zh ? '数据来源' : 'Data Source';
   String get year => _zh ? '年份' : 'Year';
   String routesCount(int count) => _zh ? '轨迹：$count 条' : 'Routes: $count';
@@ -104,9 +104,9 @@ class AppStrings {
   String get tooltipSaveToAlbum => _zh ? '保存到相册' : 'Save to Photos';
   String tooltipFetchFrom(String sourceLabel) => _zh ? '从 $sourceLabel 获取' : 'Fetch from $sourceLabel';
   String get tooltipCenterToRoutes => _zh ? '定位到轨迹' : 'Center on route';
-  String get tooltipHeatmapSettings => _zh ? '热力图设置' : 'Heatmap settings';
+  String get tooltipHeatmapSettings => _zh ? '热力图设置' : 'Exercise Heat Map settings';
   String get heatmapNeedAccountHint =>
-      _zh ? '请先在设置里绑定/配置账号，然后再加载热力图。' : 'Configure an account in Settings, then load the heatmap.';
+      _zh ? '请先在设置里绑定/配置账号，然后再加载热力图。' : 'Configure an account in Settings, then load the Exercise Heat Map.';
   String get saveFailedNotReady => _zh ? '保存失败：画面未就绪' : 'Save failed: view not ready';
   String get saveFailedImageGen => _zh ? '保存失败：生成图片失败' : 'Save failed: failed to render image';
   String get saveFailedNoAlbumPerm => _zh ? '保存失败：没有相册权限' : 'Save failed: no Photos permission';
