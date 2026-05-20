@@ -538,7 +538,7 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                                   color: scheme.onSurface.withValues(alpha: 0.85),
                                   height: 1.35,
                                 ),
-                                children: [
+                                children: [ 
                                   TextSpan(text: '${s.agreePrefix} '),
                                   TextSpan(
                                     text: s.termsOfUseEula,
