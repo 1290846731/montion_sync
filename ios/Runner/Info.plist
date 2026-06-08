@@ -64,7 +64,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>需要访问相册以保存热力图。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>用于在热力图页面获取你的当前位置，并将地图自动居中到你所在位置，例如快速查看你附近的骑行热力图轨迹。</string>
+	<string>仅在使用热力图页面相关地图服务时用于支持地图显示与定位能力；不会用于后台定位、账号同步或持续跟踪你的位置。</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>仅在使用热力图页面相关地图服务时用于支持地图显示与定位能力；不会用于后台定位、账号同步或持续跟踪你的位置。</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

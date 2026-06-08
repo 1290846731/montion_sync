@@ -12,7 +12,6 @@ import 'package:fit_sdk/fit_sdk.dart' as fit;
 import 'package:gal/gal.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:xml/xml.dart';
 import 'package:x_amap_base/x_amap_base.dart';
@@ -40,16 +39,7 @@ class HeatmapScreen extends StatefulWidget {
   State<HeatmapScreen> createState() => _HeatmapScreenState();
 }
 
-class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserver {
-  static final Uint8List _transparentPng1x1 = Uint8List.fromList(<int>[
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-    0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
-    0x42, 0x60, 0x82,
-  ]);
-  static final BitmapDescriptor _transparentBitmap = BitmapDescriptor.fromBytes(_transparentPng1x1);
-
+class _HeatmapScreenState extends State<HeatmapScreen> {
   final int _minYear = 2010;
   int _year = DateTime.now().year;
   HeatmapSource _source = HeatmapSource.strava;
@@ -61,12 +51,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
   final Key _mapKey = UniqueKey();
   final GlobalKey _exportKey = GlobalKey();
   AMapController? _amapController;
-  bool _isActiveTab = false;
-  bool _checkingLocationPermission = false;
-  bool _awaitingLocationPermissionFromSettings = false;
-  LatLng? _lastUserLocation;
-  bool _centerOnUserLocationWhenAvailable = false;
-  MyLocationStyleOptions _myLocationStyle = MyLocationStyleOptions(false);
   static const AMapApiKey _amapKeys = AMapApiKey(androidKey: 'fa1e0dca85328840c53cc33522854cf3', iosKey: '43c277d17d9481607a7ddd3745dec466');
   static const AMapPrivacyStatement _amapPrivacy = AMapPrivacyStatement(
     hasContains: true,
@@ -237,25 +221,12 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    widget.selectedTabIndex.addListener(_onTabIndexChanged);
-    _onTabIndexChanged();
     _init();
   }
 
   @override
   void dispose() {
-    widget.selectedTabIndex.removeListener(_onTabIndexChanged);
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _awaitingLocationPermissionFromSettings) {
-      _awaitingLocationPermissionFromSettings = false;
-      _handleMapActivated();
-    }
   }
 
   Future<void> _init() async {
@@ -270,112 +241,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
     setState(() => _source = source);
   }
 
-  void _onTabIndexChanged() {
-    final isActive = widget.selectedTabIndex.value == widget.tabIndex;
-    if (isActive == _isActiveTab) return;
-    _isActiveTab = isActive;
-    if (_isActiveTab) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (!_isActiveTab) return;
-        _handleMapActivated();
-      });
-    }
-  }
-
-  Permission _locationPermission() {
-    if (Platform.isIOS) return Permission.locationWhenInUse;
-    return Permission.location;
-  }
-
-  Future<void> _handleMapActivated() async {
-    if (_checkingLocationPermission) return;
-    _checkingLocationPermission = true;
-    try {
-      final granted = await _ensureLocationPermission();
-      if (!granted) return;
-      if (!mounted) return;
-      setState(() {
-        _myLocationStyle = MyLocationStyleOptions(
-          true,
-          icon: _transparentBitmap,
-          circleFillColor: Colors.transparent,
-          circleStrokeColor: Colors.transparent,
-          circleStrokeWidth: 0,
-        );
-      });
-      _centerOnUserLocationWhenAvailable = true;
-      _centerToUserLocationIfPossible();
-    } finally {
-      _checkingLocationPermission = false;
-    }
-  }
-
-  Future<bool> _ensureLocationPermission() async {
-    final perm = _locationPermission();
-    var status = await perm.status;
-    if (status.isGranted) return true;
-
-    if (status.isDenied) {
-      status = await perm.request();
-      if (status.isGranted) return true;
-    }
-
-    if (!mounted) return false;
-    await _showLocationPermissionSheet();
-    return false;
-  }
-
-  Future<void> _showLocationPermissionSheet() async {
-    final s = AppI18n.s(context);
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(s.locationPermissionTitle, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(s.locationPermissionDesc, style: Theme.of(context).textTheme.bodyMedium),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: () async {
-                    _awaitingLocationPermissionFromSettings = true;
-                    Navigator.of(context).pop();
-                    await openAppSettings();
-                  },
-                  child: Text(s.openSettings),
-                ),
-                const SizedBox(height: 8),
-                FilledButton.tonal(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(s.notNow),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _centerToUserLocationIfPossible() {
-    if (!_mapReady) return;
-    final target = _lastUserLocation;
-    if (target == null) return;
-    if (!_centerOnUserLocationWhenAvailable) return;
-    _centerOnUserLocationWhenAvailable = false;
-    try {
-      _amapController?.moveCamera(
-        CameraUpdate.newCameraPosition(CameraPosition(target: target, zoom: 13)),
-      );
-    } catch (_) {}
-  }
 
   Future<void> _loadFromSource() async {
     final ok = await _ensurePurchasedForSync();
@@ -1078,11 +943,6 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
             icon: const Icon(Icons.refresh),
             tooltip: strings.tooltipFetchFrom(sourceLabel),
           ),
-          IconButton(
-            onPressed: !showMap || _routes.isEmpty ? null : _centerToRoutes,
-            icon: const Icon(Icons.my_location),
-            tooltip: strings.tooltipCenterToRoutes,
-          ),
           if (_loading)
             const Padding(
               padding: EdgeInsets.only(right: 12),
@@ -1142,17 +1002,10 @@ class _HeatmapScreenState extends State<HeatmapScreen> with WidgetsBindingObserv
                             ),
                             mapType: MapType.night,
                             mapLanguage: controller.language == AppLanguage.zh ? MapLanguage.chinese : MapLanguage.english,
-                            myLocationStyleOptions: _myLocationStyle,
-                            onLocationChanged: (loc) {
-                              if (!isLocationValid(loc)) return;
-                              _lastUserLocation = loc.latLng;
-                              _centerToUserLocationIfPossible();
-                            },
                             onMapCreated: (c) {
                               _amapController = c;
                               _mapReady = true;
-                              _centerToUserLocationIfPossible();
-                              if (_lastUserLocation == null && _routes.isNotEmpty) _centerToRoutes();
+                              if (_routes.isNotEmpty) _centerToRoutes();
                             },
                             polylines: _buildPolylines(controller),
                           );
