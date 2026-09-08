@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三七健康 隐私政策</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+    color: #1e293b;
+    line-height: 1.8;
+    padding: 24px 16px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(14, 165, 233, 0.12), 0 4px 16px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #10b981 100%);
+    padding: 48px 40px 40px;
+    color: #ffffff;
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .header .sub {
+    font-size: 14px;
+    opacity: 0.92;
+    font-weight: 500;
+  }
+  .header .badge {
+    display: inline-block;
+    margin-top: 18px;
+    background: rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+  .content {
+    padding: 40px;
+  }
+  .intro-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #ecfeff 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+  }
+  .intro-card p {
+    font-size: 14.5px;
+    color: #0c4a6e;
+    font-weight: 500;
+  }
+  .intro-card .highlight {
+    color: #0369a1;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 40px 0 18px;
+    padding-left: 14px;
+    border-left: 5px solid #0ea5e9;
+    line-height: 1.3;
+  }
+  h2:first-of-type {
+    margin-top: 0;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0c4a6e;
+    margin: 24px 0 12px;
+  }
+  p, li {
+    font-size: 14.5px;
+    color: #334155;
+    margin-bottom: 10px;
+  }
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 14px;
+  }
+  li {
+    margin-bottom: 8px;
+  }
+  .data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 1px;
+    background: #e2e8f0;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 18px 0 28px;
+  }
+  .data-grid .cell {
+    background: #ffffff;
+    padding: 12px 16px;
+    font-size: 13.5px;
+  }
+  .data-grid .cell.head {
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13.5px;
+  }
+  .data-grid .cell.type {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #0c4a6e;
+  }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .tag.necessary { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  .tag.optional { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .tag.local { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .tag.third { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+  .notice-box {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 16px 20px;
+    border-radius: 0 12px 12px 0;
+    margin: 18px 0;
+  }
+  .notice-box p { color: #92400e; font-size: 14px; margin: 0; font-weight: 500; }
+  .safe-box {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 16px 20px;
+    border-radius: 0 12px 12px 0;
+    margin: 18px 0;
+  }
+  .safe-box p { color: #065f46; font-size: 14px; margin: 0; font-weight: 500; }
+  .contact-card {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 20px;
+  }
+  .contact-card h3 { color: #1e40af; margin-top: 0; }
+  .contact-card .item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #1e293b;
+  }
+  .contact-card .item .label {
+    font-weight: 700;
+    min-width: 80px;
+    color: #334155;
+  }
+  .footer {
+    background: #f8fafc;
+    padding: 28px 40px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  .footer p {
+    font-size: 12.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .footer .update {
+    font-weight: 700;
+    color: #475569;
+  }
+  @media (max-width: 640px) {
+    .header { padding: 32px 24px 28px; }
+    .header h1 { font-size: 24px; }
+    .content { padding: 24px 18px; }
+    .data-grid { grid-template-columns: 1fr; }
+    .data-grid .cell.head { display: none; }
+    .data-grid .cell { padding: 10px 14px; }
+    .data-grid .cell::before { content: attr(data-label) "："; font-weight: 700; color: #0c4a6e; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>🔒 三七健康 隐私政策</h1>
+    <div class="sub">Privacy Policy · mjBetter</div>
+    <div class="badge">生效日期：2026年09月08日</div>
+  </div>
+
+  <div class="content">
+
+    <div class="intro-card">
+      <p>
+        <span class="highlight">三七健康（mjBetter）</span>深知个人信息对您的重要性。本政策将帮助您了解：
+        我们收集哪些信息、如何使用这些信息、信息的存储与安全、以及您享有的权利。
+        本应用定位为<span class="highlight">「AI驱动的科学减脂与运动健康管理平台」</span>，
+        所有数据处理均围绕这一核心目的进行。请您在使用前仔细阅读本政策。
+      </p>
+    </div>
+
+    <h2>一、我们收集的个人信息类型</h2>
+    <p>根据「最小必要」原则，我们仅采集实现减脂服务所必需的信息。具体分类如下：</p>
+
+    <div class="data-grid">
+      <div class="cell head">信息类别</div>
+      <div class="cell head">具体数据项</div>
+      <div class="cell head">必要性 / 来源</div>
+
+      <div class="cell type">用户基础资料</div>
+      <div class="cell" data-label="具体数据项">身高、体重、体脂率、年龄、生物性别、目标体重、每日热量缺口目标、手动设定的静息能量（BMR）</div>
+      <div class="cell" data-label="必要性/来源"><span class="tag necessary">减脂计算必需</span>用户主动填写</div>
+
+      <div class="cell type">运动健康数据<br>（健康槽）</div>
+      <div class="cell" data-label="具体数据项">
+        ① Apple Health / 华为健康：热量消耗（Basal/Active）、活动小时、静息心率、运动心率、体脂率、体重、步数、距离、睡眠时长<br>
+        ② 仅读取，不写入
+      </div>
+      <div class="cell" data-label="必要性/来源"><span class="tag optional">可选授权</span><span class="tag third">第三方平台</span></div>
+
+      <div class="cell type">运动记录数据<br>（运动槽）</div>
+      <div class="cell" data-label="具体数据项">Strava / Garmin / 华为健康：锻炼记录概要（类型、时长、距离、消耗卡路里）、详情（心率区间、配速、VO2 Max、训练负荷）、实时运动数据</div>
+      <div class="cell" data-label="必要性/来源"><span class="tag optional">可选绑定</span><span class="tag third">第三方平台</span></div>
+
+      <div class="cell type">饮食记录数据</div>
+      <div class="cell" data-label="具体数据项">餐段类型（早/午/下午茶/晚/夜宵）、食物名称、图片、卡路里、蛋白质/碳水/脂肪宏量元素、用餐时间</div>
+      <div class="cell" data-label="必要性/来源"><span class="tag necessary">减脂必需</span><span class="tag local">本地存储</span></div>
+
+      <div class="cell type">AI 对话数据</div>
+      <div class="cell" data-label="具体数据项">用户输入的文本、AI模型回复内容、上传的食物图片（用于识别分析）、结构化工具调用上下文</div>
+      <div class="cell" data-label="必要性/来源"><span class="tag necessary">服务必需</span><span class="tag third">AI服务商</span></div>
+
+      <div class="cell type">设备绑定状态</div>
+      <div class="cell" data-label="具体数据项">当前绑定的健康槽类型（Apple Health/华为健康）、运动槽类型（Strava/Garmin等）、绑定时间</div>
+      <div class="cell" data-label="必要性/来源"><span class="tag necessary">架构必需</span><span class="tag local">本地存储</span></div>
+    </div>
+
+    <div class="notice-box">
+      <p>⚠️ <strong>特别说明：</strong>本应用<strong>不采集</strong>真实姓名、身份证号、手机号、通讯录、地理位置（非运动轨迹）、短信记录等与减脂服务无关的信息。</p>
+    </div>
+
+    <h2>二、我们如何使用收集的信息</h2>
+    <p>所有信息的使用严格服务于「科学减脂」核心目的，具体场景如下：</p>
+
+    <h3>1. 卡路里消耗计算与展示</h3>
+    <ul>
+      <li>通过 <strong>CalorieAggregateService</strong> 统一计算每日总消耗：静息能量（三级回退：健康槽实测 Basal → 用户 Profile 手动 → 30天静坐均值）+ 活动能量（Workout 与 Active Energy 叠加去重，防止双倍计算）</li>
+      <li>首页仪表盘展示：7天日均消耗、运动时长/次数/距离多维统计、运动日历热力图</li>
+      <li>所有时间计算统一按<strong>北京时间（UTC+8）零点</strong>归一化，防止时区偏移导致数据归属错误</li>
+    </ul>
+
+    <h3>2. AI 个性化减脂方案生成</h3>
+    <ul>
+      <li>将用户 Profile（身高、体重、年龄、性别、目标）+ 近30天运动历史 + 饮食记录 + 当日消耗汇总为结构化上下文</li>
+      <li>通过大语言模型（LLM）生成：个性化饮食方案、本周训练计划、饮食搭配建议、月度身体复盘与下月计划</li>
+      <li>AI 工具结构化调用：<code>estimate_daily_calories</code>（获取每日卡路里明细）、<code>get_meal_records</code>（查询已记录饮食）</li>
+    </ul>
+
+    <h3>3. 身体数据趋势分析</h3>
+    <ul>
+      <li>体脂率、肌肉量、静息心率变化趋势曲线图展示</li>
+      <li>AI 体型评估：结合体脂/体重变化给出减脂/增肌阶段建议</li>
+      <li>VO2 Max 最大摄氧量、训练负荷趋势分析，预防过度训练</li>
+    </ul>
+
+    <h3>4. 饮食记录与热量缺口管理</h3>
+    <ul>
+      <li>AI 拍照识别：上传食物图片 → AI 识别食物种类 → 估算卡路里与宏量元素 → 用户气泡确认后入记录</li>
+      <li>按餐段色块（早餐橙/午餐绿/下午茶紫/晚餐青/夜宵红）区分展示，今日汇总卡片显示当日摄入与剩余配额</li>
+      <li>摄入与消耗对冲计算当日热量缺口，支撑减脂进度跟踪</li>
+    </ul>
+
+    <h3>5. 实时运动数据面板（锻炼中）</h3>
+    <ul>
+      <li>锻炼过程中实时展示：当前心率、配速、累计距离、累计卡路里、运动时长</li>
+      <li>运动强度语音播报提醒（如心率进入过高区间时提示降速）</li>
+    </ul>
+
+    <h2>三、信息的存储与安全</h2>
+
+    <div class="safe-box">
+      <p>🛡️ <strong>本地优先存储策略：</strong>绝大多数数据存储于设备本地，不上传第三方服务器</p>
+    </div>
+
+    <h3>1. 存储方式：高性能 MMKV</h3>
+    <p>所有结构化数据（用户 Profile、绑定状态、饮食记录元数据、运动缓存索引）采用腾讯开源的 <strong>MMKV</strong> 高性能本地键值存储方案，存储于应用沙盒内（iOS：Application Support目录；Android：App私有目录），非Root/越狱设备无法访问。</p>
+
+    <h3>2. 缓存策略</h3>
+    <ul>
+      <li>7天/30天卡路里聚合结果：<strong>5分钟内存缓存</strong>，过期自动失效</li>
+      <li>30天静坐均值 Basal：<strong>24小时缓存</strong></li>
+      <li>运动记录列表缓存：最多200条，超出自动裁剪</li>
+      <li>食物图片：存储于应用沙盒 Documents 目录，绑定记录 ID</li>
+    </ul>
+
+    <h3>3. 第三方数据传输安全</h3>
+    <ul>
+      <li><strong>健康平台 API：</strong>华为 Health Kit、Apple HealthKit 均为设备端授权后读取，Apple Health 数据通过原生串行队列（_serialize）访问，防止并发崩溃与数据竞争</li>
+      <li><strong>Strava / Garmin OAuth：</strong>仅在用户完成 OAuth 授权后获取 Access Token，Token 同样存储于 MMKV</li>
+      <li><strong>AI 模型 API：</strong>通过 HTTPS TLS 1.2+ 加密通道传输请求上下文，仅传递计算必需字段，不携带设备无关标识符</li>
+    </ul>
+
+    <h3>4. 数据出境说明</h3>
+    <p>本应用服务范围为<strong>中国大陆及亚太地区</strong>。若所使用的 AI 服务商或第三方运动平台服务器位于境外，相关数据传输将遵循对应平台的跨境传输合规条款，且始终限定于减脂计算最小必要范围。</p>
+
+    <h2>四、第三方服务接入清单</h2>
+    <p>本应用通过 Adapter 抽象模式接入以下第三方服务，各服务均有独立的隐私政策：</p>
+    <ul>
+      <li><strong>华为健康（Health Kit）</strong>：读取热量、活动小时、锻炼记录概要/详情、体脂、心率、运动能力、一月历史数据、实时锻炼数据 — iOS亚太/Android免登录授权</li>
+      <li><strong>Apple HealthKit</strong>：读取 Basal Energy、Active Energy、Workout、心率、体脂、体重、睡眠、步数、距离</li>
+      <li><strong>Strava API v3</strong>：通过 OAuth 读取 Athlete 运动记录与流数据（心率、配速、功率 Stream）</li>
+      <li><strong>Garmin Connect</strong>：通过官方 OAuth 接入活动记录</li>
+      <li><strong>大语言模型（LLM）服务商</strong>：接收结构化上下文生成减脂方案与食物识别结果</li>
+      <li><strong>image_picker（系统相册/相机）</strong>：仅在用户主动发起「拍照识别食物」时调用，图片不自动上传</li>
+    </ul>
+
+    <h2>五、您的权利与控制</h2>
+    <p>作为数据主体，您享有以下完整权利，均可通过本应用「我的」页面自助完成：</p>
+
+    <h3>1. 知情与撤回授权</h3>
+    <ul>
+      <li><strong>解绑健康槽：</strong>我的 → 设备绑定 → 解除 Apple Health / 华为健康绑定</li>
+      <li><strong>解绑运动槽：</strong>我的 → 设备绑定 → 解除 Strava / Garmin 绑定，对应 Access Token 立即从 MMKV 清除</li>
+      <li>iOS 系统可在「设置 → 隐私与安全性 → 健康」中随时撤销本 App 对 HealthKit 的读取权限</li>
+      <li>华为健康可在「运动健康 App → 隐私 → 数据共享与授权」中撤回授权</li>
+    </ul>
+
+    <h3>2. 数据访问、更正与删除</h3>
+    <ul>
+      <li><strong>查询访问：</strong>首页查看运动/消耗数据；饮食页滚动浏览历史记录；我的 → 个人资料查看基础 Profile</li>
+      <li><strong>更正编辑：</strong>个人资料字段可随时修改（身高、体重、目标体重、体脂率、每日缺口、BMR）；单条饮食记录支持编辑与修改餐段</li>
+      <li><strong>删除记录：</strong>饮食记录左滑可删除单条；我的 → 清除本地缓存可清空全部应用数据（含MMKV存储、缓存图片、运动记录索引）</li>
+    </ul>
+
+    <h3>3. 关闭 AI 图片识别</h3>
+    <p>您可仅使用手动饮食录入功能，不使用拍照识别，此时应用<strong>不会</strong>调用相机/相册权限，亦不上传任何图片。</p>
+
+    <h2>六、未成年人保护</h2>
+    <p>本应用主要服务于<strong>18周岁以上</strong>具有完全民事行为能力的成年人减脂管理。若您为未成年人，请在监护人陪同下阅读本政策；我们<strong>不主动采集</strong>未满14周岁儿童的任何个人信息。</p>
+
+    <h2>七、Cookie 与同类技术</h2>
+    <p>本应用为原生 Flutter App，<strong>不使用 Cookie 跟踪</strong>。登录授权采用 OAuth 标准流程，仅存储必要 Token 于本地 MMKV。</p>
+
+    <h2>八、政策更新</h2>
+    <p>当业务功能发生重大变化（如新增第三方数据接入、使用目的变更）时，我们会在应用内以弹窗或公告方式通知您，并更新本页顶部的「生效日期」。重大变更需重新取得您的明示同意。</p>
+
+    <h2>九、联系我们</h2>
+    <p>如您对本隐私政策有任何疑问、投诉或数据权利申请，请通过以下方式联系个人开发者：</p>
+
+    <div class="contact-card">
+      <h3>📮 开发者联系方式</h3>
+      <div class="item"><span class="label">邮箱：</span>请在应用「我的 → 意见反馈」中发送邮件（推荐方式）</div>
+      <div class="item"><span class="label">响应时效：</span>一般问题 48 小时内回复；数据删除/投诉问题 15 个工作日内处理完毕</div>
+      <div class="item"><span class="label">管辖法律：</span>中华人民共和国法律（不含港澳台地区）</div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p class="update">📅 最后更新：2026年09月08日 | 版本 v1.0</p>
+    <p>© 2026 三七健康 mjBetter · 个人开发者出品</p>
+    <p style="margin-top:10px; color:#94a3b8;">
+      本应用严格遵循《个人信息保护法》《网络安全法》《App违法违规收集使用个人信息行为认定方法》
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

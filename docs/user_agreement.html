@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三七健康 用户服务协议</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 40%, #ecfeff 100%);
+    color: #1e293b;
+    line-height: 1.8;
+    padding: 24px 16px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(245, 158, 11, 0.10), 0 4px 16px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #f59e0b 0%, #fb923c 50%, #0ea5e9 100%);
+    padding: 48px 40px 40px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 320px;
+    height: 320px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: "";
+    position: absolute;
+    bottom: -60%;
+    left: -5%;
+    width: 260px;
+    height: 260px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+  }
+  .header .sub {
+    font-size: 14px;
+    opacity: 0.92;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+  }
+  .header .badges {
+    margin-top: 18px;
+    position: relative;
+    z-index: 1;
+  }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    margin-right: 8px;
+    margin-bottom: 6px;
+  }
+  .content {
+    padding: 40px;
+  }
+  .toc {
+    background: linear-gradient(135deg, #fffbeb, #fefce8);
+    border: 1px solid #fde68a;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+  }
+  .toc h3 {
+    color: #92400e;
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  .toc ol {
+    padding-left: 20px;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+  }
+  .toc li {
+    font-size: 13.5px;
+    color: #78350f;
+    font-weight: 500;
+    padding: 2px 0;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 40px 0 18px;
+    padding: 12px 18px;
+    background: linear-gradient(90deg, #fff7ed 0%, #ffffff 80%);
+    border-left: 6px solid #f59e0b;
+    border-radius: 4px 14px 14px 4px;
+    line-height: 1.3;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #9a3412;
+    margin: 24px 0 12px;
+    padding-left: 10px;
+    border-left: 3px solid #fb923c;
+  }
+  p, li {
+    font-size: 14.5px;
+    color: #334155;
+    margin-bottom: 10px;
+  }
+  ul, ol {
+    padding-left: 22px;
+    margin-bottom: 14px;
+  }
+  li {
+    margin-bottom: 8px;
+  }
+  li strong { color: #0f172a; }
+  .warn-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 5px solid #dc2626;
+    border-radius: 0 14px 14px 0;
+    padding: 18px 22px;
+    margin: 22px 0;
+  }
+  .warn-box p { color: #991b1b; font-size: 14px; margin: 0 0 8px 0; font-weight: 500; }
+  .warn-box p:last-child { margin-bottom: 0; }
+  .warn-box .title {
+    font-weight: 800;
+    font-size: 15px;
+    color: #b91c1c;
+    margin-bottom: 8px;
+  }
+  .safe-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid #10b981;
+    border-radius: 0 14px 14px 0;
+    padding: 18px 22px;
+    margin: 22px 0;
+  }
+  .safe-box .title {
+    font-weight: 800;
+    font-size: 15px;
+    color: #065f46;
+    margin-bottom: 8px;
+  }
+  .safe-box p { color: #065f46; font-size: 14px; margin: 0 0 6px 0; }
+  .dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 18px 0;
+  }
+  .dual-grid .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .dual-grid .card .title {
+    font-weight: 800;
+    font-size: 14.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dual-grid .card.user .title { color: #1d4ed8; }
+  .dual-grid .card.dev .title { color: #b45309; }
+  .dual-grid .card ul { margin: 0; padding-left: 18px; }
+  .dual-grid .card li { font-size: 13.5px; margin-bottom: 6px; }
+  .slogan-box {
+    background: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%);
+    border-radius: 18px;
+    padding: 26px 30px;
+    margin: 30px 0;
+    color: #fff;
+    text-align: center;
+  }
+  .slogan-box .q {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .slogan-box .a {
+    font-size: 14px;
+    opacity: 0.94;
+    font-weight: 500;
+  }
+  .footer {
+    background: #f8fafc;
+    padding: 28px 40px;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  .footer p {
+    font-size: 12.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .footer .update {
+    font-weight: 700;
+    color: #475569;
+  }
+  @media (max-width: 640px) {
+    .header { padding: 32px 24px 28px; }
+    .header h1 { font-size: 24px; }
+    .content { padding: 24px 18px; }
+    .toc ol { grid-template-columns: 1fr; }
+    .dual-grid { grid-template-columns: 1fr; }
+    h2 { font-size: 18px; padding: 10px 14px; }
+    h2 .num { width: 28px; height: 28px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>📜 三七健康 用户服务协议</h1>
+    <div class="sub">Terms of Service · mjBetter User Agreement</div>
+    <div class="badges">
+      <div class="badge">生效：2026.09.08</div>
+      <div class="badge">个人开发者</div>
+      <div class="badge">AI减脂服务</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="toc">
+      <h3>📑 协议目录（快速导航）</h3>
+      <ol>
+        <li>协议的接受与修订</li>
+        <li>服务内容概述</li>
+        <li>账号与设备绑定</li>
+        <li>用户行为规范</li>
+        <li>AI服务特别条款</li>
+        <li>健康与运动免责声明</li>
+        <li>知识产权</li>
+        <li>服务的变更、中断、终止</li>
+        <li>违约责任与争议解决</li>
+        <li>联系开发者</li>
+      </ol>
+    </div>
+
+    <div class="slogan-box">
+      <div class="q">「三分练 · 七分吃 · 十分健康」</div>
+      <div class="a">请您在开始使用三七健康（mjBetter）之前，仔细阅读本协议全部条款。<br>点击「同意」或继续使用即视为您已完整理解并接受本协议的所有内容。</div>
+    </div>
+
+    <h2><span class="num">一</span>协议的接受与修订</h2>
+    <h3>1.1 协议主体</h3>
+    <p>
+      本协议是您与<strong>三七健康（mjBetter）个人开发者</strong>（以下简称「开发者」或「我们」）之间就使用「三七健康」移动应用及相关服务所订立的法律协议。
+      本应用定位为<strong>AI驱动的科学减脂与运动健康管理工具</strong>，面向中国大陆及亚太地区个人用户提供免费的基础服务。
+    </p>
+    <h3>1.2 接受条件</h3>
+    <ul>
+      <li>您须为<strong>年满18周岁</strong>且具有完全民事行为能力的自然人；未成年人使用须由监护人陪同并同意本协议。</li>
+      <li>点击注册/登录/「同意」按钮，或首次启动并实际使用本应用功能，即视为您已阅读并同意本协议全部条款。</li>
+      <li>如您不同意任何条款，请<strong>立即卸载本应用</strong>并停止使用。</li>
+    </ul>
+    <h3>1.3 协议修订</h3>
+    <p>
+      我们有权根据法律法规变化或业务功能调整（如新增第三方健康平台接入、AI模型更换等）修订本协议。
+      修订版本将在应用内通过弹窗或「我的 → 关于」页面公告，<strong>公告7日后自动生效</strong>；
+      若为重大变更（如服务收费模式调整、使用目的实质性变更），将重新取得您的明示同意。
+    </p>
+
+    <h2><span class="num">二</span>服务内容概述</h2>
+    <p>三七健康基于 Flutter 跨平台框架开发，为您提供以下核心服务（免费提供，部分 AI 功能依赖您的网络环境）：</p>
+    <div class="dual-grid">
+      <div class="card user">
+        <div class="title">🏠 数据仪表盘服务</div>
+        <ul>
+          <li>7天日均消耗统计（kcal/天）</li>
+          <li>7天运动时长、次数、距离统计</li>
+          <li>运动日历热力图 + 月视图切换</li>
+          <li>消耗强度分级评估（偏低/健康/积极/高强）</li>
+        </ul>
+      </div>
+      <div class="card dev">
+        <div class="title">🤖 AI减脂助手服务</div>
+        <ul>
+          <li>多轮对话式AI减脂咨询</li>
+          <li>基于7天运动数据的个性化饮食方案</li>
+          <li>本周训练计划定制</li>
+          <li>月度身体复盘与下月规划</li>
+          <li>结构化工具调用（卡路里查询/饮食记录）</li>
+        </ul>
+      </div>
+      <div class="card user">
+        <div class="title">🍽️ 饮食记录管理</div>
+        <ul>
+          <li>手动录入三餐+下午茶+夜宵</li>
+          <li>AI拍照识别食物与估算卡路里</li>
+          <li>按日期分组历史浏览</li>
+          <li>当日摄入汇总与剩余配额计算</li>
+          <li>早/午/下午茶/晚/夜宵色块区分</li>
+        </ul>
+      </div>
+      <div class="card dev">
+        <div class="title">🔗 多源数据聚合服务</div>
+        <ul>
+          <li><strong>健康槽：</strong>Apple HealthKit / 华为健康 Health Kit</li>
+          <li><strong>运动槽：</strong>Strava / Garmin Connect / iGPSPORT / 顽鹿 Onelap</li>
+          <li>双槽位独立绑定，运动槽优先级高于健康槽</li>
+          <li>统一 CalorieAggregateService 聚合去重</li>
+          <li>全链路北京时间（UTC+8）时区对齐</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2><span class="num">三</span>账号与设备绑定</h2>
+    <h3>3.1 本地账号体系</h3>
+    <p>
+      三七健康采用<strong>纯本地账号体系</strong>，不强制要求您提供手机号或邮箱注册。
+      个人资料、绑定状态、饮食记录等数据均存储于设备本地 MMKV。
+      卸载应用或手动清除缓存将同时清除所有本地数据，请谨慎操作。
+    </p>
+    <h3>3.2 第三方 OAuth 绑定</h3>
+    <ul>
+      <li><strong>绑定自愿：</strong>健康槽/运动槽绑定均为用户主动发起，遵循各平台 OAuth 2.0 授权流程。</li>
+      <li><strong>互斥规则：</strong>同一时间仅允许绑定一个健康槽（Apple Health 或 华为健康）与一个运动槽（Strava/Garmin等），更换需先解绑。</li>
+      <li><strong>解绑自由：</strong>随时可在「我的 → 设备绑定」中解除绑定，Token 将立即从 MMKV 删除，后续不再主动拉取数据。</li>
+      <li><strong>数据归属：</strong>第三方平台的原始数据所有权归原平台及用户所有，本应用仅在授权范围内<strong>读取</strong>，不回写、不上传、不二次分发。</li>
+    </ul>
+
+    <h2><span class="num">四</span>用户行为规范</h2>
+    <p>您在使用本应用过程中，须遵守中华人民共和国法律法规及公序良俗，不得从事以下行为：</p>
+    <ul>
+      <li><strong>反向工程：</strong>对本应用进行反编译、反汇编、破解付费机制（如有）、篡改数据显示逻辑；</li>
+      <li><strong>滥用接口：</strong>通过脚本、爬虫等批量调用 AI 服务接口或第三方运动平台 API，超过合理请求频率；</li>
+      <li><strong>虚假录入：</strong>故意录入虚假的运动/饮食数据用于测试或误导AI，导致AI输出失真后果自行承担；</li>
+      <li><strong>违法内容：</strong>利用AI对话功能生成色情、暴力、恐怖、分裂国家、诈骗等任何违法违规内容；</li>
+      <li><strong>数据倒卖：</strong>将本应用输出的AI分析结果、自身或他人健康数据用于商业出售、数据集训练、保险核保等协议外用途。</li>
+    </ul>
+
+    <h2><span class="num">五</span>AI 服务特别条款</h2>
+    <p>
+      三七健康的核心差异化功能由第三方大语言模型（LLM）驱动。AI 服务具有以下固有特性，请您充分知悉：
+    </p>
+    <div class="warn-box">
+      <div class="title">⚠️ AI 输出非医疗建议声明</div>
+      <p>本应用所提供的所有 AI 建议（包括但不限于饮食方案、训练计划、恢复建议、卡路里估算值）<strong>仅供参考，不构成任何医疗诊断、治疗或用药建议</strong>。</p>
+      <p>AI 模型基于统计学规律生成内容，<strong>可能存在幻觉、事实错误、数值偏差</strong>（如食物卡路里估算误差通常在 ±20% 范围内），请您结合常识判断，关键健康决策请咨询持有执业资质的医师、营养师或专业健身教练。</p>
+    </div>
+    <h3>5.1 结构化工具调用</h3>
+    <p>
+      AI 可通过预置 Tool 读取您的运动消耗与饮食记录数据（<code>estimate_daily_calories</code>、<code>get_meal_records</code>），
+      调用范围严格遵循北京时间时区对齐规则。AI 仅可<strong>读取</strong>，无权限改写您的本地记录。
+      饮食记录添加需通过用户气泡确认（<code>MEAL_SUGGEST</code> 结构化注释块驱动），未经您手动确认不会自动写入。
+    </p>
+    <h3>5.2 图片识别服务</h3>
+    <ul>
+      <li>拍照识别功能默认关闭，需您主动点击「拍照」按钮触发，不会后台自动上传。</li>
+      <li>图片仅用于当次食物识别分析，完成后不默认保存于第三方服务器（以AI服务商隐私政策为准）。</li>
+      <li>请避免拍摄包含人脸、车牌号、涉密文件等敏感信息的背景图片。</li>
+    </ul>
+
+    <h2><span class="num">六</span>健康与运动免责声明</h2>
+    <p>
+      本条款是本协议中最核心的免责部分，请您<strong>务必仔细阅读并充分理解</strong>。
+    </p>
+    <div class="warn-box">
+      <div class="title">🚨 重要免责声明</div>
+      <p><strong>1. 非医疗服务性质：</strong>三七健康为运动健身与健康管理辅助工具，<strong>不是医疗器械</strong>，不具备疾病诊断、治疗、康复、慢病管理功能，不可替代医生诊疗。</p>
+      <p><strong>2. 运动风险自担：</strong>运动本身具有潜在风险（包括但不限于肌肉拉伤、骨折、心脑血管意外、猝死），开始新的训练计划前建议您先完成体检并获得医生许可，尤其若您有高血压、心脏病、哮喘、糖尿病、关节损伤等病史。本应用输出的训练计划不对运动过程中的意外承担任何责任。</p>
+      <p><strong>3. 实时数据误差：</strong>锻炼实时心率、配速、距离来源于第三方设备与传感器，受GPS信号、设备佩戴、蓝牙传输等因素影响，<strong>可能存在延迟或误差</strong>，请勿仅依赖本应用数据进行安全临界判断。</p>
+      <p><strong>4. 饮食建议参考：</strong>AI 给出的卡路里目标与饮食方案基于通用公式（Mifflin-St Jeor / Harris-Benedict 基础代谢乘以活动系数），<strong>不替代营养师处方</strong>。孕妇、哺乳期女性、饮食障碍史、慢性病患者请遵医嘱。</p>
+      <p><strong>5. 第三方数据质量：</strong>从 Strava、Garmin、华为健康、Apple Health 等聚合而来的数据准确性与完整性取决于原平台与设备，本应用不对其数据本身的错误或缺失承担责任。</p>
+    </div>
+
+    <div class="safe-box">
+      <div class="title">✅ 我们的承诺</div>
+      <p>尽管有上述免责，我们承诺：<strong>竭尽全力提升数据聚合逻辑的科学性</strong>，包括但不限于——热量去重（Workout不与Active Energy重复叠加）、三级静息能量回退优先级、北京时间零点归一化避免时区错位。</p>
+    </div>
+
+    <h2><span class="num">七</span>知识产权</h2>
+    <ul>
+      <li><strong>本应用著作权：</strong>三七健康（mjBetter）App 的 UI 设计、图标、文案、代码架构、图表组件均归开发者所有，受《著作权法》保护。</li>
+      <li><strong>第三方组件：</strong>本应用使用了开源 Flutter 生态（fl_chart、genui、mmkv、health、image_picker 等），遵循各组件对应的 LICENSE（MIT/Apache-2.0/BSD 等）。</li>
+      <li><strong>用户数据：</strong>您录入的个人资料、饮食记录、AI 对话内容归<strong>您本人</strong>所有。</li>
+      <li><strong>AI输出：</strong>AI 生成的方案文本在合法范围内您可自由使用，但不得用于批量训练其他竞争性大模型。</li>
+    </ul>
+
+    <h2><span class="num">八</span>服务的变更、中断、终止</h2>
+    <h3>8.1 服务变更</h3>
+    <p>
+      我们有权因技术迭代、第三方服务条款变动（如 Strava API 配额调整、华为健康权限变更、AI 服务商终止合作）对服务内容进行调整。
+      重大调整将在应用内公告，您有权选择继续使用或卸载终止。
+    </p>
+    <h3>8.2 服务中断</h3>
+    <ul>
+      <li>因网络故障、第三方 API 限流、服务器维护、iOS/Android 系统升级导致的暂时性服务不可用，我们将尽快恢复但不承担违约责任。</li>
+      <li>本地功能（如已缓存数据展示、手动饮食录入）不受网络影响可继续使用。</li>
+    </ul>
+    <h3>8.3 服务终止</h3>
+    <p>
+      如长期无法维持运营，开发者将至少提前<strong>30日</strong>在应用内公告停止服务时间，
+      并提供充足窗口期供您在「我的 → 清除本地缓存」之前手动导出或截图保存您的个人数据。
+    </p>
+
+    <h2><span class="num">九</span>违约责任与争议解决</h2>
+    <h3>9.1 用户违约</h3>
+    <p>
+      若您违反本协议第四条（行为规范）或第六条（恶意利用免责条款索赔），开发者有权：
+      ① 限制或终止您对 AI 服务的调用；② 保存相关行为日志用于举证；③ 对因此造成的损失（包括商誉损害、第三方索赔）保留追偿权利。
+    </p>
+    <h3>9.2 责任限额</h3>
+    <p>
+      本应用为<strong>免费服务</strong>，在法律允许的最大范围内，开发者对任何间接、附带、特殊、惩罚性损害（包括但不限于利润损失、数据丢失、人身伤害索赔）的累计赔偿上限不超过<strong>人民币 0 元</strong>。
+      对因本应用存在缺陷直接导致的本地数据丢失，责任范围限于提供合理的技术协助尝试恢复。
+    </p>
+    <h3>9.3 争议解决</h3>
+    <ul>
+      <li>首先友好协商解决；协商不成可通过应用内置反馈通道提交。</li>
+      <li>任何争议均提交<strong>开发者住所地（中华人民共和国境内）</strong>有管辖权的人民法院诉讼解决。</li>
+      <li>本协议的订立、生效、履行、解释均适用<strong>中华人民共和国法律</strong>（不含港澳台地区法律）。</li>
+    </ul>
+
+    <h2><span class="num">十</span>联系开发者</h2>
+    <p>对本协议有任何疑问、建议、投诉、举报，可通过以下优先通道联系：</p>
+    <div class="safe-box">
+      <div class="title">📮 推荐联系方式</div>
+      <p><strong>方式一：</strong>打开三七健康 App → 进入「我的」页面 → 点击「意见反馈」（推荐，附带设备与版本信息便于定位）</p>
+      <p><strong>方式二：</strong>通过应用市场（App Store / 华为应用市场等）对应页面的「开发者联系方式」发送邮件</p>
+      <p>我们承诺在<strong>收到反馈后 48 小时内</strong>予以响应（节假日顺延）；涉及个人信息权利的正式申请在 15 个工作日内回复处理结果。</p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p class="update">📅 最后更新：2026年09月08日 | 协议版本 v1.0</p>
+    <p>© 2026 三七健康 mjBetter · 个人开发者出品</p>
+    <p style="margin-top:10px; color:#94a3b8;">
+      本协议与《三七健康隐私政策》为不可分割的整体，共同构成您与开发者之间的完整服务合同。
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
